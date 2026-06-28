@@ -331,27 +331,14 @@ function draw(){
   }
 
   // Monster
-  const blink=Math.floor(tick/15)%2;
   ctx.save();
   ctx.shadowColor='#ff0022';
   ctx.shadowBlur=18;
   ctx.fillStyle='#cc0022';
-  ctx.beginPath();ctx.arc(mn.px,mn.py,12+blink,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(mn.px,mn.py,12,0,Math.PI*2);ctx.fill();
   ctx.shadowBlur=0;
-  // body details
   ctx.fillStyle='#ff1133';
-  ctx.beginPath();ctx.arc(mn.px,mn.py,10+blink,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#080010';
-  ctx.fillRect(mn.px-6,mn.py-5,5,5); // left eye socket
-  ctx.fillRect(mn.px+1,mn.py-5,5,5); // right eye socket
-  ctx.fillStyle='#ff4466';
-  ctx.fillRect(mn.px-5,mn.py-4,3,3); // left eye
-  ctx.fillRect(mn.px+2,mn.py-4,3,3); // right eye
-  // teeth
-  ctx.fillStyle='#ffdddd';
-  for(let i=0;i<3;i++){
-    ctx.fillRect(mn.px-4+i*3,mn.py+3,2,4);
-  }
+  ctx.beginPath();ctx.arc(mn.px,mn.py,10,0,Math.PI*2);ctx.fill();
   ctx.restore();
 
   // Player glow
