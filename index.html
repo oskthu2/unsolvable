@@ -530,23 +530,9 @@ function dismissMsg(){document.getElementById('msg').style.display='none';}
 // ─── CATCH ────────────────────────────────────────────────────
 function triggerCatch(){
   if(caught)return;
-  caught=true;lives--;
-  document.getElementById('livesD').textContent=Math.max(0,lives);
+  caught=true;dead=true;
   closeLaptop();
-  if(lives<=0){
-    dead=true;
-    showMsg('CAUGHT!\n\nThe creature drags you away...\nWith no lives left, the killer\nescapes justice forever.\n\nGAME OVER',true,true);
-  } else {
-    showMsg('CAUGHT!\n\nThe monster got you!\n'+lives+(lives===1?' life':' lives')+' remaining.\nPositions reset — keep running!');
-    setTimeout(()=>{
-      if(!dead){
-        pl.px=48;pl.py=48;
-        mn.px=23*CELL+CELL/2;mn.py=17*CELL+CELL/2;
-        mn.path=[];mn.pt=0;
-        caught=false;
-      }
-    },1800);
-  }
+  showMsg('CAUGHT!\n\nThe creature drags you away\nbefore you can solve the case.\n\nGAME OVER',true,true);
 }
 
 // ─── GAME LOOP ────────────────────────────────────────────────
