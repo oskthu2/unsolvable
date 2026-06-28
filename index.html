@@ -530,15 +530,12 @@ function fileCharges(){
   } else {
     lives--;
     document.getElementById('livesD').textContent=lives;
-    let hint='';
-    if(cs&&!ce) hint='Right suspect — wrong key evidence.';
-    else if(!cs&&ce) hint='Right evidence — wrong suspect.';
-    else hint='Both incorrect. Read the files more carefully.';
+    const suspectName=document.getElementById('suspSel').options[document.getElementById('suspSel').selectedIndex].text.split('(')[0].trim();
     if(lives<=0){
       dead=true;
-      showMsg('WRONG ACCUSATION\n\n'+hint+'\n\nWith no lives left the killer\ndisappears into the night.\n\nGAME OVER',true,true);
+      showMsg(suspectName+' could not be proven guilty.\n\nWith no lives left the killer\ndisappears into the night.\n\nGAME OVER',true,true);
     } else {
-      showMsg('WRONG ACCUSATION\n\n'+hint+'\n\n'+lives+(lives===1?' life':' lives')+' remaining.\nKeep investigating.');
+      showMsg(suspectName+' could not be proven guilty.\n\n'+lives+(lives===1?' life':' lives')+' remaining.\nKeep investigating.');
     }
   }
 }
