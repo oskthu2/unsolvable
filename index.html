@@ -343,15 +343,16 @@ function draw(){
     ctx.beginPath();ctx.arc(mn.px,mn.py,10,0,Math.PI*2);ctx.fill();
     ctx.restore();
   } else if(pingFlash>0){
-    // Ping: brief red ring at monster location
+    // Ping: expanding rings that fade out
     const alpha=pingFlash/PING_DURATION;
+    const expand=(1-alpha)*28;
     ctx.save();
-    ctx.globalAlpha=alpha;
     ctx.strokeStyle='#ff2244';
-    ctx.lineWidth=3;
     ctx.shadowColor='#ff0022';ctx.shadowBlur=12;
-    ctx.beginPath();ctx.arc(mn.px,mn.py,14,0,Math.PI*2);ctx.stroke();
-    ctx.beginPath();ctx.arc(mn.px,mn.py,22,0,Math.PI*2);ctx.stroke();
+    ctx.globalAlpha=alpha;ctx.lineWidth=3;
+    ctx.beginPath();ctx.arc(mn.px,mn.py,12+expand,0,Math.PI*2);ctx.stroke();
+    ctx.globalAlpha=alpha*0.6;ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(mn.px,mn.py,20+expand,0,Math.PI*2);ctx.stroke();
     ctx.globalAlpha=1;ctx.restore();
   }
 
