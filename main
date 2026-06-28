@@ -1,1 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The Voss Mansion Mystery</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;display:flex;justify-content:center;align-items:center;height:100vh;font-family:monospace;overflow:hidden}
+#gc{position:relative;width:800px;height:608px}
+canvas{display:block;image-rendering:pixelated}
 
+#hud{position:absolute;top:0;left:0;right:0;background:rgba(0,0,0,0.75);color:#ccc;padding:4px 10px;font-size:13px;display:flex;justify-content:space-between;pointer-events:none;z-index:5;border-bottom:1px solid #222}
+#hud span{color:#fff}
+#hud .title{color:#aabbff}
+
+#hint{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.7);color:#556;font-size:11px;font-family:monospace;padding:3px 8px;text-align:center;pointer-events:none;z-index:5}
+
+/* ── LAPTOP OVERLAY ── */
+#laptop{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.88);display:none;justify-content:center;align-items:center;z-index:20}
+
+#lscreen{
+  width:700px;height:520px;
+  background:#06060f;
+  border:3px solid #1a1a3a;border-radius:6px;
+  box-shadow:0 0 40px rgba(40,60,255,0.25),inset 0 0 30px rgba(0,0,0,0.6);
+  display:flex;flex-direction:column;
+  position:relative;overflow:hidden;
+  font-family:'Courier New',monospace;
+  image-rendering:pixelated;
+}
+/* CRT scanlines */
+#lscreen::after{
+  content:'';position:absolute;top:0;left:0;right:0;bottom:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.08) 2px,rgba(0,0,0,0.08) 4px);
+  pointer-events:none;z-index:999;
+}
+/* CRT flicker */
+@keyframes flicker{0%,100%{opacity:1}92%{opacity:0.97}93%{opacity:0.92}94%{opacity:0.97}}
+#lscreen{animation:flicker 4s infinite}
+
+.ltb{
+  background:#0d0d22;border-bottom:1px solid #1a1a3a;
+  padding:5px 10px;color:#6677cc;font-size:11px;
+  display:flex;justify-content:space-between;align-items:center;flex-shrink:0;
+}
+.ltb .path{color:#3344aa}
+.xbtn{background:#2a0000;color:#ff3333;border:1px solid #aa0000;padding:1px 7px;cursor:pointer;font-size:10px;font-family:monospace}
+.xbtn:hover{background:#440000}
+
+/* Desktop */
+#deskView{padding:10px;overflow:hidden;height:100%}
+.deskPath{color:#2a3355;font-size:10px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #111}
+.icons{display:flex;flex-wrap:wrap;gap:14px;padding:4px}
+.icon{
+  display:flex;flex-direction:column;align-items:center;
+  cursor:pointer;width:74px;color:#7788cc;
+  font-size:10px;text-align:center;
+  padding:6px 4px;border:1px solid transparent;
+  user-select:none;transition:none;
+}
+.icon:hover{border-color:#3355cc;background:rgba(40,60,200,0.18)}
+.icon .em{font-size:26px;margin-bottom:4px;filter:saturate(0.7)brightness(0.9)}
+.icon .lbl{line-height:1.3;color:#8899dd}
+.caseNote{color:#2a3344;font-size:10px;margin-top:10px;padding:6px;border-top:1px solid #111;line-height:1.6}
+.caseNote .warn{color:#cc4422}
+
+/* File viewer */
+#fileView{display:none;flex-direction:column;height:100%}
+.fvbar{background:#0a0a1c;border-bottom:1px solid #1a1a2a;padding:4px 8px;color:#445588;font-size:10px;display:flex;gap:8px;align-items:center;flex-shrink:0}
+.bbtn{background:#0d0d22;color:#7788cc;border:1px solid #1a1a3a;padding:1px 8px;cursor:pointer;font-size:10px;font-family:monospace}
+.bbtn:hover{background:#141430}
+.fc{flex:1;overflow-y:auto;padding:14px;color:#99aacc;font-size:11px;line-height:1.7}
+.fc::-webkit-scrollbar{width:5px}
+.fc::-webkit-scrollbar-track{background:#080816}
+.fc::-webkit-scrollbar-thumb{background:#1a1a33}
+.fc h3{color:#7799ff;margin-bottom:10px;font-size:12px;letter-spacing:1px}
+.fc p{margin-bottom:5px}
+.fc .hl{color:#ffcc55}
+.fc .clue{color:#55ddaa;border-left:2px solid #33aa77;padding-left:8px;margin:6px 0}
+.fc .warn{color:#ff6644}
+.fc .ok{color:#55cc55}
+.fc .dim{color:#445566}
+
+/* Accuse panel */
+#accuseView{display:none;flex-direction:column;height:100%;padding:14px}
+.ap-bar{background:#0a0a1c;border-bottom:1px solid #1a1a2a;padding:4px 8px;color:#445588;font-size:10px;display:flex;gap:8px;align-items:center;flex-shrink:0;margin:-14px -14px 14px -14px}
+.ap h3{color:#ff7733;font-size:13px;margin-bottom:6px;letter-spacing:1px}
+.ap p{color:#556677;font-size:11px;margin-bottom:12px;line-height:1.6}
+.ap label{color:#8899aa;font-size:11px;display:block;margin-bottom:4px}
+.ap select{
+  background:#050510;color:#99aacc;border:1px solid #1a1a33;
+  padding:6px;font-family:'Courier New',monospace;font-size:11px;
+  margin-bottom:10px;width:100%;
+}
+.ap select option{background:#050510}
+.acbtn{
+  background:#1a0000;color:#ff3333;border:2px solid #cc1100;
+  padding:10px;cursor:pointer;font-family:'Courier New',monospace;
+  font-size:12px;width:100%;margin-top:4px;letter-spacing:2px;
+}
+.acbtn:hover{background:#2a0000}
+
+/* Status bar */
+#sbar{background:#06060e;border-top:1px solid #111;padding:3px 10px;color:#2a3344;font-size:10px;flex-shrink:0}
+
+/* Message */
+#msg{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:rgba(2,2,10,0.97);border:2px solid #fff;
+  color:#ddd;padding:24px 32px;font-size:14px;font-family:monospace;
+  text-align:center;display:none;z-index:40;white-space:pre-line;
+  max-width:460px;line-height:1.7;
+}
+#msg button{
+  margin-top:16px;background:#111;color:#fff;
+  border:1px solid #555;padding:8px 22px;cursor:pointer;
+  font-family:monospace;font-size:13px;
+}
+#msg button:hover{background:#222}
+</style>
+</head>
+<body>
+<div id="gc">
+  <canvas id="cv" width="800" height="608"></canvas>
+
+  <div id="hud">
+    <span>&#10084; <span id="livesD">3</span> / 3</span>
+    <span class="title">THE VOSS MANSION MYSTERY</span>
+    <span style="color:#445">[L] Laptop</span>
+  </div>
+
+  <!-- LAPTOP -->
+  <div id="laptop">
+    <div id="lscreen">
+      <div class="ltb">
+        <span>MysteryOS v2.1 &nbsp;&#9135;&nbsp; DETECTIVE TERMINAL &nbsp;&#9135;&nbsp; <span class="path" id="pathBar">C:\CASES\VOSS_MURDER\</span></span>
+        <button class="xbtn" onclick="closeLaptop()">[X]</button>
+      </div>
+
+      <!-- Desktop -->
+      <div id="deskView" style="flex:1;overflow:hidden">
+        <div style="padding:10px;height:100%">
+          <div class="deskPath">C:\CASES\VOSS_MURDER\ &gt; 6 items &nbsp;|&nbsp; last modified: 11:47 PM</div>
+          <div class="icons">
+            <div class="icon" onclick="openF('s1')"><div class="em">&#128193;</div><div class="lbl">SUSPECT_01<br>D.MARSH</div></div>
+            <div class="icon" onclick="openF('s2')"><div class="em">&#128193;</div><div class="lbl">SUSPECT_02<br>R.FROST</div></div>
+            <div class="icon" onclick="openF('s3')"><div class="em">&#128193;</div><div class="lbl">SUSPECT_03<br>C.VOSS</div></div>
+            <div class="icon" onclick="openF('s4')"><div class="em">&#128193;</div><div class="lbl">SUSPECT_04<br>T.HALE</div></div>
+            <div class="icon" onclick="openF('ev')"><div class="em">&#128208;</div><div class="lbl">EVIDENCE<br>[8 items]</div></div>
+            <div class="icon" onclick="openF('ac')"><div class="em">&#9878;</div><div class="lbl">FILE<br>CHARGES</div></div>
+          </div>
+          <div class="caseNote">
+            CASE #4471 — Prof. Edgar Voss found dead in his private study. Cause of death: Aconitine poisoning.<br>
+            Time of death: approx. 11:30 PM. Research notebook stolen from scene.<br>
+            <span class="warn">STATUS: OPEN — SUSPECT UNKNOWN</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- File viewer -->
+      <div id="fileView">
+        <div class="fvbar">
+          <button class="bbtn" onclick="goBack()">&#9668; BACK</button>
+          <span id="fvPath">C:\CASES\VOSS_MURDER\</span>
+        </div>
+        <div class="fc" id="fvContent"></div>
+      </div>
+
+      <!-- Accuse panel -->
+      <div id="accuseView" class="ap">
+        <div class="ap-bar">
+          <button class="bbtn" onclick="goBack()">&#9668; BACK</button>
+          <span>C:\CASES\VOSS_MURDER\CHARGES.exe</span>
+        </div>
+        <h3>&#9888; FILE FORMAL CHARGES</h3>
+        <p>Select the suspect you believe is guilty and the single piece of evidence that conclusively places them at the scene. A wrong accusation costs a life. Choose carefully.</p>
+        <label>SELECT SUSPECT:</label>
+        <select id="suspSel" class="ap">
+          <option value="">-- SELECT SUSPECT --</option>
+          <option value="marsh">Diana Marsh &nbsp;(Research Assistant)</option>
+          <option value="frost">Reginald Frost &nbsp;(Business Partner)</option>
+          <option value="voss">Clara Voss &nbsp;(Daughter)</option>
+          <option value="hale">Thomas Hale &nbsp;(Butler)</option>
+        </select>
+        <label>SELECT KEY EVIDENCE:</label>
+        <select id="evSel" class="ap">
+          <option value="">-- SELECT EVIDENCE --</option>
+          <option value="poison">01. Poison Vial</option>
+          <option value="cufflink">02. Monogrammed Cufflink (R.F.)</option>
+          <option value="cathair">03. Cat Hair Sample</option>
+          <option value="notebook">04. Torn Notebook Page</option>
+          <option value="letter">05. Threatening Letter</option>
+          <option value="boot">06. Muddy Boot Print (Size 11)</option>
+          <option value="keycard">07. Lab Keycard (D.MARSH)</option>
+          <option value="witness">08. Witness Statement</option>
+        </select>
+        <button class="acbtn" onclick="fileCharges()">&#9878; SUBMIT CHARGES</button>
+      </div>
+
+      <div id="sbar">LIVES: &#10084;&#10084;&#10084; &nbsp;|&nbsp; CASE: OPEN &nbsp;|&nbsp; MONSTER DISTANCE: ---</div>
+    </div>
+  </div>
+
+  <!-- Message box -->
+  <div id="msg"><div id="msgTxt"></div><button id="msgBtn" onclick="dismissMsg()">CONTINUE</button></div>
+
+  <div id="hint">WASD / Arrow Keys &nbsp;&#9135;&nbsp; [L] Open Laptop &nbsp;&#9135;&nbsp; [ESC] Close Laptop &nbsp;&#9135;&nbsp; Investigate the case &mdash; but don&apos;t get caught!</div>
+</div>
+
+<script>
+// ─── CONSTANTS ───────────────────────────────────────────────
+const CELL = 32, COLS = 25, ROWS = 19;
+const PSPEED = 2.8, MSPEED = 1.6;
+
+// ─── MAZE (25×19, 1=wall 0=path) ─────────────────────────────
+const M = [
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [1,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,1],
+  [1,0,1,1,0,1,0,1,1,1,1,1,0,1,0,1,1,1,0,1,0,1,1,0,1],
+  [1,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,1],
+  [1,0,1,0,1,1,1,1,0,1,0,1,0,1,1,1,0,1,0,1,1,1,0,1,1],
+  [1,0,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1],
+  [1,1,1,0,1,1,0,1,0,1,1,1,1,1,0,1,1,1,0,1,1,1,1,0,1],
+  [1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1],
+  [1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,0,1,1,0,1],
+  [1,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,1],
+  [1,0,1,1,0,1,1,0,1,1,1,0,1,1,1,0,1,1,0,1,1,0,1,0,1],
+  [1,0,0,1,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,1],
+  [1,1,0,1,0,0,0,1,1,1,0,1,0,1,0,1,1,1,0,0,0,1,1,0,1],
+  [1,0,0,0,0,1,0,0,0,1,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1],
+  [1,0,1,1,1,1,1,1,0,1,0,1,1,1,0,1,1,1,1,1,1,1,1,0,1],
+  [1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1],
+  [1,1,0,1,1,1,0,1,0,1,1,1,1,1,0,1,1,0,1,1,0,1,1,0,1],
+  [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+];
+// Fix row 4 col 24 (was 1 = border OK)
+
+// ─── GAME STATE ───────────────────────────────────────────────
+let lives = 3, dead = false, won = false, laptopOpen = false;
+let caught = false;
+let pl = {px:48, py:48};          // pixel centre
+let mn = {px:752, py:560, path:[], pt:0}; // 23*32+16, 17*32+16
+let keys = {};
+let tick = 0;
+
+// ─── BFS ──────────────────────────────────────────────────────
+function bfs(sx,sy,ex,ey){
+  const vis=Array.from({length:ROWS},()=>Array(COLS).fill(false));
+  const prev=Array.from({length:ROWS},()=>Array(COLS).fill(null));
+  const q=[[sx,sy]]; vis[sy][sx]=true;
+  const D=[[0,-1],[0,1],[-1,0],[1,0]];
+  while(q.length){
+    const[cx,cy]=q.shift();
+    if(cx===ex&&cy===ey){
+      const p=[];let c=[ex,ey];
+      while(c){p.unshift(c);c=prev[c[1]][c[0]];}
+      return p;
+    }
+    for(const[dx,dy]of D){
+      const nx=cx+dx,ny=cy+dy;
+      if(nx>=0&&ny>=0&&nx<COLS&&ny<ROWS&&!vis[ny][nx]&&M[ny][nx]===0){
+        vis[ny][nx]=true;prev[ny][nx]=[cx,cy];q.push([nx,ny]);
+      }
+    }
+  }
+  return[];
+}
+
+// ─── MOVEMENT ─────────────────────────────────────────────────
+function tryMove(obj, dx, dy, speed){
+  if(dx!==0){
+    const npx=obj.px+dx*speed;
+    const col=Math.floor((npx-CELL/2+(dx>0?CELL-1:0))/CELL);
+    const r1=Math.floor((obj.py-CELL/2+3)/CELL);
+    const r2=Math.floor((obj.py-CELL/2+CELL-4)/CELL);
+    if(M[r1]?.[col]===0&&M[r2]?.[col]===0) obj.px=npx;
+  }
+  if(dy!==0){
+    const npy=obj.py+dy*speed;
+    const row=Math.floor((npy-CELL/2+(dy>0?CELL-1:0))/CELL);
+    const c1=Math.floor((obj.px-CELL/2+3)/CELL);
+    const c2=Math.floor((obj.px-CELL/2+CELL-4)/CELL);
+    if(M[row]?.[c1]===0&&M[row]?.[c2]===0) obj.py=npy;
+  }
+}
+
+function gridOf(px,py){
+  return{x:Math.round((px-CELL/2)/CELL),y:Math.round((py-CELL/2)/CELL)};
+}
+
+// ─── CANVAS ───────────────────────────────────────────────────
+const cv=document.getElementById('cv');
+const ctx=cv.getContext('2d');
+
+function draw(){
+  ctx.fillStyle='#050510';
+  ctx.fillRect(0,0,800,608);
+
+  // Maze
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      const x=c*CELL,y=r*CELL;
+      if(M[r][c]===1){
+        ctx.fillStyle='#18082a';
+        ctx.fillRect(x,y,CELL,CELL);
+        ctx.fillStyle='#2a0f44';
+        ctx.fillRect(x,y,CELL,2);
+        ctx.fillRect(x,y,2,CELL);
+        ctx.fillStyle='#0d0518';
+        ctx.fillRect(x+CELL-2,y,2,CELL);
+        ctx.fillRect(x,y+CELL-2,CELL,2);
+      } else {
+        ctx.fillStyle='#08051a';
+        ctx.fillRect(x,y,CELL,CELL);
+        ctx.fillStyle='rgba(80,60,120,0.07)';
+        ctx.fillRect(x+CELL/2-1,y+CELL/2-1,2,2);
+      }
+    }
+  }
+
+  // Monster danger glow
+  const dist=Math.hypot(mn.px-pl.px,mn.py-pl.py);
+  if(dist<CELL*7){
+    const prox=1-dist/(CELL*7);
+    const mg=ctx.createRadialGradient(mn.px,mn.py,0,mn.px,mn.py,CELL*4);
+    mg.addColorStop(0,`rgba(255,0,40,${0.18*prox})`);
+    mg.addColorStop(1,'rgba(255,0,40,0)');
+    ctx.fillStyle=mg;
+    ctx.fillRect(mn.px-CELL*4,mn.py-CELL*4,CELL*8,CELL*8);
+  }
+
+  // Monster
+  const blink=Math.floor(tick/15)%2;
+  ctx.save();
+  ctx.shadowColor='#ff0022';
+  ctx.shadowBlur=18;
+  ctx.fillStyle='#cc0022';
+  ctx.beginPath();ctx.arc(mn.px,mn.py,12+blink,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;
+  // body details
+  ctx.fillStyle='#ff1133';
+  ctx.beginPath();ctx.arc(mn.px,mn.py,10+blink,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#080010';
+  ctx.fillRect(mn.px-6,mn.py-5,5,5); // left eye socket
+  ctx.fillRect(mn.px+1,mn.py-5,5,5); // right eye socket
+  ctx.fillStyle='#ff4466';
+  ctx.fillRect(mn.px-5,mn.py-4,3,3); // left eye
+  ctx.fillRect(mn.px+2,mn.py-4,3,3); // right eye
+  // teeth
+  ctx.fillStyle='#ffdddd';
+  for(let i=0;i<3;i++){
+    ctx.fillRect(mn.px-4+i*3,mn.py+3,2,4);
+  }
+  ctx.restore();
+
+  // Player glow
+  const pg=ctx.createRadialGradient(pl.px,pl.py,0,pl.px,pl.py,CELL);
+  pg.addColorStop(0,'rgba(0,255,220,0.22)');
+  pg.addColorStop(1,'rgba(0,255,220,0)');
+  ctx.fillStyle=pg;
+  ctx.fillRect(pl.px-CELL,pl.py-CELL,CELL*2,CELL*2);
+
+  // Player
+  ctx.save();
+  ctx.shadowColor='#00ffcc';
+  ctx.shadowBlur=14;
+  ctx.fillStyle='#00ffcc';
+  ctx.beginPath();ctx.arc(pl.px,pl.py,9,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.fillStyle='#003322';
+  ctx.beginPath();ctx.arc(pl.px,pl.py,4,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(0,255,200,0.5)';
+  ctx.beginPath();ctx.arc(pl.px-3,pl.py-3,3,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+
+  // Caught flash
+  if(caught){
+    ctx.fillStyle='rgba(255,0,0,0.35)';
+    ctx.fillRect(0,0,800,608);
+  }
+
+  updateSbar(dist);
+}
+
+// ─── LAPTOP STATUS BAR ────────────────────────────────────────
+function updateSbar(dist){
+  const cells=Math.round(dist/CELL);
+  const h='&#10084;'.repeat(lives)+'&#9825;'.repeat(Math.max(0,3-lives));
+  document.getElementById('sbar').innerHTML=
+    `LIVES: ${h} &nbsp;|&nbsp; CASE: OPEN &nbsp;|&nbsp; MONSTER: ~${cells} cells away`;
+}
+
+// ─── LAPTOP FOLDER DATA ───────────────────────────────────────
+const folders={
+  s1:{path:'C:\\CASES\\VOSS_MURDER\\SUSPECT_01_MARSH\\profile.txt',html:`
+<h3>&#9670; DIANA MARSH &mdash; Research Assistant, Age 31</h3>
+<p><span class="hl">RELATION:</span> Worked directly under Prof. Voss for 3 years in his private lab.</p>
+<p><span class="hl">MOTIVE:</span> Unclear. Claims she respected the Professor deeply. Neighbours report hearing heated arguments at the lab in the past month.</p>
+<div class="clue">&#9873; CLUE: Diana owns a Siamese cat named &quot;Leibniz&quot;. White cat hairs matching Siamese breed were found on the victim's collar.</div>
+<div class="clue">&#9873; CLUE: Her personal lab keycard was found on the floor of the study. She claims she lost it weeks ago and never reported it.</div>
+<p><span class="hl">ALIBI:</span> Claims she was home alone all evening. No corroborating witnesses.</p>
+<p><span class="hl">BUILD:</span> Slim, 5'4&quot;. Shoe size 6. <span class="warn">The boot print at the scene measures size 11.</span></p>
+<p class="warn">&#9888; Suspicious — but physical evidence does not match well.</p>`},
+  s2:{path:'C:\\CASES\\VOSS_MURDER\\SUSPECT_02_FROST\\profile.txt',html:`
+<h3>&#9670; REGINALD FROST &mdash; Business Partner, Age 55</h3>
+<p><span class="hl">RELATION:</span> Co-founder of VossLab Industries. Their partnership had become deeply strained over ownership of new research.</p>
+<p><span class="hl">MOTIVE:</span> <span class="warn">STRONG.</span> Under their partnership contract, full company control and the rights to all research pass to Frost upon Voss's death.</p>
+<div class="clue">&#9873; CLUE: A gold cufflink engraved &quot;<b>R.F.</b>&quot; in ornate script was found under the victim's desk, 3 feet from the body. Frost denies ever entering the study.</div>
+<div class="clue">&#9873; CLUE: A handwritten letter in the victim's private safe reads: <i>&quot;Edgar &mdash; hand over the notebook or face the consequences. You know I am not bluffing. &mdash; R.F.&quot;</i></div>
+<div class="clue">&#9873; CLUE: Neighbour Mrs. Webb saw &quot;a large man in a dark grey overcoat&quot; leaving via the side gate at 11:45 PM. Frost is 6'2&quot;, heavyset, and owns a grey overcoat.</div>
+<p><span class="hl">ALIBI:</span> Claims to have been at a dinner function. Function ended at 10:00 PM. Whereabouts 10 PM&ndash;midnight: <span class="warn">UNVERIFIED.</span></p>
+<p><span class="hl">BUILD:</span> 6'2&quot;, heavyset. <span class="hl">Shoe size 11.</span></p>
+<p class="warn">&#9888; Multiple pieces of evidence independently place him at the scene.</p>`},
+  s3:{path:'C:\\CASES\\VOSS_MURDER\\SUSPECT_03_VOSS\\profile.txt',html:`
+<h3>&#9670; CLARA VOSS &mdash; Daughter of Victim, Age 26</h3>
+<p><span class="hl">RELATION:</span> Estranged daughter. Had not spoken to her father in over a year due to a dispute over her inheritance.</p>
+<p><span class="hl">MOTIVE:</span> Significant gambling debts totalling nearly &pound;38,000. Would stand to inherit the estate.</p>
+<div class="clue">&#9873; CLUE: Bank records show a large cash withdrawal the morning before the murder.</div>
+<p><span class="hl">ALIBI:</span> <span class="ok">CONFIRMED AND VERIFIED.</span> Clara was in Edinburgh at time of death. Hotel records and CCTV footage confirm her presence at 11:30 PM, over 400 miles away.</p>
+<p class="ok">&#10003; Alibi airtight &mdash; physically impossible for her to be present.</p>`},
+  s4:{path:'C:\\CASES\\VOSS_MURDER\\SUSPECT_04_HALE\\profile.txt',html:`
+<h3>&#9670; THOMAS HALE &mdash; Butler / House Staff, Age 62</h3>
+<p><span class="hl">RELATION:</span> Served the Voss household for 18 years before being dismissed two weeks ago. Claims he was owed three months' back pay.</p>
+<p><span class="hl">MOTIVE:</span> Bitter over dismissal and unpaid wages. Described his former employer as &quot;cruel and dishonest.&quot;</p>
+<div class="clue">&#9873; CLUE: Hale returned to the property the evening of the murder to &quot;collect personal belongings&quot; &mdash; confirmed by the cook.</div>
+<div class="clue">&#9873; CLUE: Hale knew the mansion intimately, including the location of the study's hidden wall safe.</div>
+<p><span class="hl">ALIBI:</span> Cook Mrs. Fenwick confirms Hale was in the kitchen from 9 PM to 10:30 PM. Time of death is 11:30 PM. Whereabouts after 10:30: <span class="warn">UNCLEAR.</span></p>
+<p><span class="hl">BUILD:</span> 5'9&quot;, thin. Shoe size 8.5. <span class="warn">Boot print at scene is size 11.</span></p>
+<p class="warn">&#9888; Has access and knowledge, but physical evidence does not match.</p>`},
+  ev:{path:'C:\\CASES\\VOSS_MURDER\\EVIDENCE\\inventory.txt',html:`
+<h3>&#9670; EVIDENCE INVENTORY &mdash; CASE #4471</h3>
+<p class="dim">8 items logged &nbsp;|&nbsp; Forensics report complete &nbsp;|&nbsp; Chain of custody maintained</p>
+<div class="clue"><b>01. POISON VIAL</b> &mdash; Found in garden shrubbery, 2m from study window. Contains residue of Aconitine (monkshood extract). Appears to have been thrown from the window. No fingerprints.</div>
+<div class="clue"><b>02. MONOGRAMMED CUFFLINK (R.F.)</b> &mdash; 18-carat gold. Found under Prof. Voss's desk, 3 feet from body. Initials "R.F." engraved in ornate script. Its pair was absent from the victim's person. Frost claims to own an identical pair.</div>
+<div class="clue"><b>03. CAT HAIR SAMPLE</b> &mdash; White cat hair, ~6cm. Found on victim's jacket collar. DNA profile: Siamese domestic breed. Diana Marsh owns a Siamese cat. Voss did not own pets.</div>
+<div class="clue"><b>04. TORN NOTEBOOK PAGE</b> &mdash; Fragment of what appears to be the stolen research notebook. Found on study floor near the open window. Partial equations visible. Suggests the thief departed in haste.</div>
+<div class="clue"><b>05. THREATENING LETTER</b> &mdash; Handwritten. Found in victim's private wall safe. Text: <i>"Edgar &mdash; hand over the notebook or face the consequences. You know I am not bluffing. &mdash; R.F."</i> Paper traced to a premium stationery shop; Frost purchased the same brand six months ago.</div>
+<div class="clue"><b>06. MUDDY BOOT PRINT</b> &mdash; Found on study floor near window entry point. Wellington-style, men's size 11. Soil composition matches the garden outside the window.</div>
+<div class="clue"><b>07. LAB KEYCARD (D.MARSH)</b> &mdash; Diana Marsh's personal access card to the private laboratory. Found on the study floor near the door. Marsh claims it went missing weeks ago but never filed a report.</div>
+<div class="clue"><b>08. WITNESS STATEMENT</b> &mdash; Mrs. P. Webb (neighbour) observed "a large man in a dark grey overcoat" leaving the mansion via the side garden gate at approximately 11:45 PM, roughly 15 minutes after the estimated time of death.</div>`},
+};
+
+function openF(id){
+  if(id==='ac'){
+    document.getElementById('deskView').style.display='none';
+    document.getElementById('fileView').style.display='none';
+    document.getElementById('accuseView').style.display='flex';
+    document.getElementById('pathBar').textContent='C:\\CASES\\VOSS_MURDER\\CHARGES.exe';
+    return;
+  }
+  const d=folders[id];if(!d)return;
+  document.getElementById('deskView').style.display='none';
+  document.getElementById('accuseView').style.display='none';
+  document.getElementById('fvPath').textContent=d.path;
+  document.getElementById('fvContent').innerHTML=d.html;
+  document.getElementById('fileView').style.display='flex';
+  document.getElementById('pathBar').textContent=d.path;
+}
+
+function goBack(){
+  document.getElementById('fileView').style.display='none';
+  document.getElementById('accuseView').style.display='none';
+  document.getElementById('deskView').style.display='block';
+  document.getElementById('pathBar').textContent='C:\\CASES\\VOSS_MURDER\\';
+}
+
+function fileCharges(){
+  const s=document.getElementById('suspSel').value;
+  const e=document.getElementById('evSel').value;
+  if(!s||!e){showMsg('Select both a suspect\nand a piece of evidence.');return;}
+  closeLaptop();
+  const cs=s==='frost';
+  const ce=e==='cufflink'||e==='letter';
+  if(cs&&ce){
+    won=true;
+    showMsg(
+      'CASE SOLVED\n\n'+
+      'Reginald Frost is placed under arrest.\n\n'+
+      'Under interrogation he confessed:\n'+
+      'He poisoned Prof. Voss to seize sole control\n'+
+      'of VossLab Industries and stole the research\n'+
+      'notebook worth millions.\n\n'+
+      'The cufflink placed him at the scene.\n'+
+      'Justice is served, Detective.\n\n'+
+      '★  YOU WIN  ★',
+      true,false
+    );
+  } else {
+    lives--;
+    document.getElementById('livesD').textContent=lives;
+    let hint='';
+    if(cs&&!ce) hint='Right suspect — wrong key evidence.';
+    else if(!cs&&ce) hint='Right evidence — wrong suspect.';
+    else hint='Both incorrect. Read the files more carefully.';
+    if(lives<=0){
+      dead=true;
+      showMsg('WRONG ACCUSATION\n\n'+hint+'\n\nWith no lives left the killer\ndisappears into the night.\n\nGAME OVER',true,true);
+    } else {
+      showMsg('WRONG ACCUSATION\n\n'+hint+'\n\n'+lives+(lives===1?' life':' lives')+' remaining.\nKeep investigating.');
+    }
+  }
+}
+
+// ─── LAPTOP OPEN / CLOSE ──────────────────────────────────────
+function openLaptop(){
+  if(dead||won)return;
+  laptopOpen=true;
+  document.getElementById('laptop').style.display='flex';
+}
+function closeLaptop(){
+  laptopOpen=false;
+  document.getElementById('laptop').style.display='none';
+}
+
+// ─── MESSAGES ─────────────────────────────────────────────────
+function showMsg(txt,isEnd,isGameOver){
+  const el=document.getElementById('msg');
+  document.getElementById('msgTxt').textContent=txt;
+  el.style.borderColor=isGameOver?'#ff0000':isEnd?'#ffdd00':'#ffffff';
+  const btn=document.getElementById('msgBtn');
+  if(isEnd){btn.textContent=isGameOver?'GAME OVER':'PLAY AGAIN';btn.onclick=()=>location.reload();}
+  else{btn.textContent='CONTINUE';btn.onclick=dismissMsg;}
+  el.style.display='block';
+}
+function dismissMsg(){document.getElementById('msg').style.display='none';}
+
+// ─── CATCH ────────────────────────────────────────────────────
+function triggerCatch(){
+  if(caught)return;
+  caught=true;lives--;
+  document.getElementById('livesD').textContent=Math.max(0,lives);
+  closeLaptop();
+  if(lives<=0){
+    dead=true;
+    showMsg('CAUGHT!\n\nThe creature drags you away...\nWith no lives left, the killer\nescapes justice forever.\n\nGAME OVER',true,true);
+  } else {
+    showMsg('CAUGHT!\n\nThe monster got you!\n'+lives+(lives===1?' life':' lives')+' remaining.\nPositions reset — keep running!');
+    setTimeout(()=>{
+      if(!dead){
+        pl.px=48;pl.py=48;
+        mn.px=23*CELL+CELL/2;mn.py=17*CELL+CELL/2;
+        mn.path=[];mn.pt=0;
+        caught=false;
+      }
+    },1800);
+  }
+}
+
+// ─── GAME LOOP ────────────────────────────────────────────────
+let lt=0;
+function loop(ts){
+  requestAnimationFrame(loop);
+  const dt=Math.min((ts-lt)/1000,0.05);lt=ts;tick++;
+
+  if(!dead&&!won&&!caught){
+    // Player movement
+    if(!laptopOpen){
+      let dx=0,dy=0;
+      if(keys['ArrowLeft']||keys['a']||keys['A'])dx=-1;
+      if(keys['ArrowRight']||keys['d']||keys['D'])dx=1;
+      if(keys['ArrowUp']||keys['w']||keys['W'])dy=-1;
+      if(keys['ArrowDown']||keys['s']||keys['S'])dy=1;
+      if(dx&&dy)dy=0;
+      if(dx)tryMove(pl,dx,0,PSPEED);
+      if(dy)tryMove(pl,0,dy,PSPEED);
+    }
+
+    // Monster movement
+    mn.pt-=dt;
+    if(mn.pt<=0){
+      mn.pt=0.75;
+      const mg=gridOf(mn.px,mn.py);
+      const pg=gridOf(pl.px,pl.py);
+      mn.path=bfs(mg.x,mg.y,pg.x,pg.y);
+      mn.path.shift();
+    }
+    if(mn.path.length>0){
+      const[tc,tr]=mn.path[0];
+      const tx=tc*CELL+CELL/2,ty=tr*CELL+CELL/2;
+      const dx=tx-mn.px,dy=ty-mn.py;
+      const d=Math.hypot(dx,dy);
+      if(d<MSPEED+0.5){mn.px=tx;mn.py=ty;mn.path.shift();}
+      else{mn.px+=dx/d*MSPEED;mn.py+=dy/d*MSPEED;}
+    }
+
+    // Catch check
+    if(Math.hypot(mn.px-pl.px,mn.py-pl.py)<CELL*0.65){
+      triggerCatch();
+    }
+  }
+
+  draw();
+}
+
+// ─── INPUT ────────────────────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  keys[e.key]=true;
+  if(e.key==='l'||e.key==='L'){laptopOpen?closeLaptop():openLaptop();}
+  if(e.key==='Escape')closeLaptop();
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();
+});
+document.addEventListener('keyup',e=>keys[e.key]=false);
+
+// ─── START ────────────────────────────────────────────────────
+showMsg(
+  'THE VOSS MANSION MYSTERY\n\n'+
+  'Professor Edgar Voss has been murdered.\n'+
+  'His research notebook is missing.\n\n'+
+  'You must identify the killer — but a creature\npatrols the maze. It never stops hunting.\n\n'+
+  'WASD / Arrow Keys  —  Move\n'+
+  '[L]  —  Open / Close Laptop\n'+
+  '[ESC]  —  Close Laptop\n\n'+
+  'Read every file. The truth is in the details.\n\n'+
+  'Good luck, Detective.'
+);
+requestAnimationFrame(ts=>{lt=ts;requestAnimationFrame(loop);});
+</script>
+</body>
+</html>
