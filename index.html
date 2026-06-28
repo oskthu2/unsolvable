@@ -553,6 +553,7 @@ function loop(ts){
     }
 
     // Monster movement
+    if(document.getElementById('msg').style.display==='block')return;
     mn.pt-=dt;
     if(mn.pt<=0){
       mn.pt=0.75;
