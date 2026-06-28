@@ -210,7 +210,7 @@ canvas{display:block;image-rendering:pixelated}
 <script>
 // ─── CONSTANTS ───────────────────────────────────────────────
 const CELL = 32, COLS = 25, ROWS = 19;
-const PSPEED = 2.8, MSPEED = 1.6;
+const PSPEED = 2.8, MSPEED = 0.8;
 
 // ─── MAZE (25×19, 1=wall 0=path) ─────────────────────────────
 const M = [
@@ -561,7 +561,6 @@ function loop(ts){
       if(keys['ArrowRight']||keys['d']||keys['D'])dx=1;
       if(keys['ArrowUp']||keys['w']||keys['W'])dy=-1;
       if(keys['ArrowDown']||keys['s']||keys['S'])dy=1;
-      if(dx&&dy)dy=0;
       if(dx)tryMove(pl,dx,0,PSPEED);
       if(dy)tryMove(pl,0,dy,PSPEED);
     }
