@@ -148,7 +148,7 @@ canvas{display:block;image-rendering:pixelated}
             <div class="icon" onclick="openF('s4')"><div class="em">&#128193;</div><div class="lbl">SUSPECT_04<br>R.FROST</div></div>
             <div class="icon" onclick="openF('s5')"><div class="em">&#128193;</div><div class="lbl">SUSPECT_05<br>S.CRANE</div></div>
             <div class="icon" onclick="openF('s6')"><div class="em">&#128193;</div><div class="lbl">SUSPECT_06<br>M.WEBB</div></div>
-            <div class="icon" onclick="openF('ev')"><div class="em">&#128208;</div><div class="lbl">EVIDENCE<br>[22 items]</div></div>
+            <div class="icon" onclick="openF('ev')"><div class="em">&#128208;</div><div class="lbl">EVIDENCE<br>[16 items]</div></div>
             <div class="icon" onclick="openF('ac')"><div class="em">&#9878;</div><div class="lbl">FILE<br>CHARGES</div></div>
           </div>
           <div class="caseNote">
@@ -205,12 +205,6 @@ canvas{display:block;image-rendering:pixelated}
           <option value="phonecall">14. Overheard Phone Call Transcript</option>
           <option value="letter">15. Threatening Letter</option>
           <option value="lockpick">16. Broken Lock Pick</option>
-          <option value="diary">17. Victim's Diary Entry</option>
-          <option value="businesscard">18. Burned Business Card</option>
-          <option value="flask">19. Silver Hip Flask</option>
-          <option value="photo">20. Torn Photograph (Fireplace)</option>
-          <option value="inkstain">21. Ink Stain (Victim's Hand)</option>
-          <option value="anon">22. Anonymous Tip-Off Letter</option>
         </select>
         <button class="acbtn" onclick="fileCharges()">&#9878; SUBMIT CHARGES</button>
       </div>
@@ -464,7 +458,7 @@ const folders={
 <p><span class="hl">BUILD:</span> 5'11&quot;, medium build. Shoe size 11.</p>`},
   ev:{path:'C:\\CASES\\VOSS_MURDER\\EVIDENCE\\inventory.txt',html:`
 <h3>&#9670; EVIDENCE INVENTORY &mdash; CASE #4471</h3>
-<p class="dim">22 items logged &nbsp;|&nbsp; Forensics report complete &nbsp;|&nbsp; Chain of custody maintained</p>
+<p class="dim">16 items logged &nbsp;|&nbsp; Forensics report complete &nbsp;|&nbsp; Chain of custody maintained</p>
 <div class="clue"><b>01. POISON VIAL</b> &mdash; Found in garden shrubbery, 2m from study window. Contains residue of Aconitine (monkshood extract). Appears to have been thrown from the window after use. No fingerprints recovered.</div>
 <div class="clue"><b>02. CAT HAIR SAMPLE</b> &mdash; White cat hair, ~6cm. Found on victim's jacket collar. DNA profile: Siamese domestic breed. Diana Marsh owns a Siamese cat. Voss did not own pets.</div>
 <div class="clue"><b>03. TORN NOTEBOOK PAGE</b> &mdash; Fragment of the missing research notebook. Found near the open window. Partial equations visible. Suggests the thief departed hurriedly.</div>
@@ -480,13 +474,7 @@ const folders={
 <div class="clue"><b>13. PARTIAL FINGERPRINT (SMUDGED)</b> &mdash; Recovered from the outer surface of the poison vial wrapper, found separately in the bin. Too degraded for a definitive match. Ridge pattern suggests a large adult hand — inconclusive.</div>
 <div class="clue"><b>14. OVERHEARD PHONE CALL TRANSCRIPT</b> &mdash; Housekeeper Mrs. Dray overheard a call from the study at approximately 9:00 PM. She recalls the Professor shouting: &quot;You cannot threaten me like this, Reginald. I will go to the police if I have to.&quot; She identified the name &quot;Reginald&quot; clearly.</div>
 <div class="clue"><b>15. THREATENING LETTER</b> &mdash; Handwritten note found in the victim's private wall safe. Text: <i>"Edgar — hand over the notebook or face the consequences. You know I am not bluffing. — R.F."</i> Paper stock traced to a premium stationery brand; Frost purchased the same brand six months ago.</div>
-<div class="clue"><b>16. BROKEN LOCK PICK</b> &mdash; A snapped tension wrench found wedged in the study door lock. Suggests the door was picked rather than opened with a key — meaning the perpetrator had no legitimate access to the room. Fingerprints: none.</div>
-<div class="clue"><b>17. VICTIM'S DIARY ENTRY</b> &mdash; Final entry dated the day of the murder. Partial text: <i>"Met with R. this afternoon. The conversation turned ugly. I fear what he might do if I don't comply — but I cannot hand over the notebook. I simply cannot."</i> The initial "R." is used three times without further identification.</div>
-<div class="clue"><b>18. BURNED BUSINESS CARD</b> &mdash; Partially burned card recovered from the study fireplace grate. Name and contact details illegible. The company logo in the lower corner is intact and identified as belonging to the Hartwell Institute — Dr. Crane's employer.</div>
-<div class="clue"><b>19. SILVER HIP FLASK</b> &mdash; Found half-buried in the garden flowerbed, approximately 8 metres from the study window. Initialled, but the engraving has been scratched off. Contains traces of blended whisky. No fingerprints. Ownership unestablished.</div>
-<div class="clue"><b>20. TORN PHOTOGRAPH (FIREPLACE)</b> &mdash; Partially burned photograph recovered from the fireplace. Shows two men in formal wear shaking hands at what appears to be a business function. One figure is clearly Prof. Voss. The second figure's face is destroyed by fire damage. A partial sleeve and cufflink are visible on the second man's right wrist.</div>
-<div class="clue"><b>21. INK STAIN (VICTIM'S HAND)</b> &mdash; Forensics noted a fresh blue ink stain on the victim's right index finger, consistent with signing or writing documents shortly before death. No unsigned or recently signed documents were recovered from the study. Their whereabouts are unknown.</div>
-<div class="clue"><b>22. ANONYMOUS TIP-OFF LETTER</b> &mdash; Delivered to the investigating officer by hand the morning after the murder. Typed, unsigned. Text: <i>"Look at who benefits most when Voss is gone. The answer has been sitting in that study the whole time. Check the safe."</i> Paper untraceable. Source unknown.</div>`},
+<div class="clue"><b>16. BROKEN LOCK PICK</b> &mdash; A snapped tension wrench found wedged in the study door lock. Suggests the door was picked rather than opened with a key — meaning the perpetrator had no legitimate access to the room. Fingerprints: none.</div>`},
 };
 
 function openF(id){
