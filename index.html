@@ -238,6 +238,8 @@ const M = [
 
 // ─── GAME STATE ───────────────────────────────────────────────
 let lives = 3, dead = false, won = false, laptopOpen = false;
+let pingTimer = 5, pingFlash = 0;
+const PING_INTERVAL = 5, PING_DURATION = 0.6, CLOSE_DIST = CELL * 5;
 let caught = false;
 let pl = {px:48, py:48};          // pixel centre
 let mn = {px:752, py:560, path:[], pt:0}; // 23*32+16, 17*32+16
@@ -319,27 +321,39 @@ function draw(){
     }
   }
 
-  // Monster danger glow
+  // Monster visibility
   const dist=Math.hypot(mn.px-pl.px,mn.py-pl.py);
-  if(dist<CELL*7){
-    const prox=1-dist/(CELL*7);
+  const closeRange=dist<CLOSE_DIST;
+
+  if(closeRange){
+    // Danger glow when close
+    const prox=1-dist/CLOSE_DIST;
     const mg=ctx.createRadialGradient(mn.px,mn.py,0,mn.px,mn.py,CELL*4);
     mg.addColorStop(0,`rgba(255,0,40,${0.18*prox})`);
     mg.addColorStop(1,'rgba(255,0,40,0)');
     ctx.fillStyle=mg;
     ctx.fillRect(mn.px-CELL*4,mn.py-CELL*4,CELL*8,CELL*8);
+    // Full monster
+    ctx.save();
+    ctx.shadowColor='#ff0022';ctx.shadowBlur=18;
+    ctx.fillStyle='#cc0022';
+    ctx.beginPath();ctx.arc(mn.px,mn.py,12,0,Math.PI*2);ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.fillStyle='#ff1133';
+    ctx.beginPath();ctx.arc(mn.px,mn.py,10,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  } else if(pingFlash>0){
+    // Ping: brief red ring at monster location
+    const alpha=pingFlash/PING_DURATION;
+    ctx.save();
+    ctx.globalAlpha=alpha;
+    ctx.strokeStyle='#ff2244';
+    ctx.lineWidth=3;
+    ctx.shadowColor='#ff0022';ctx.shadowBlur=12;
+    ctx.beginPath();ctx.arc(mn.px,mn.py,14,0,Math.PI*2);ctx.stroke();
+    ctx.beginPath();ctx.arc(mn.px,mn.py,22,0,Math.PI*2);ctx.stroke();
+    ctx.globalAlpha=1;ctx.restore();
   }
-
-  // Monster
-  ctx.save();
-  ctx.shadowColor='#ff0022';
-  ctx.shadowBlur=18;
-  ctx.fillStyle='#cc0022';
-  ctx.beginPath();ctx.arc(mn.px,mn.py,12,0,Math.PI*2);ctx.fill();
-  ctx.shadowBlur=0;
-  ctx.fillStyle='#ff1133';
-  ctx.beginPath();ctx.arc(mn.px,mn.py,10,0,Math.PI*2);ctx.fill();
-  ctx.restore();
 
   // Player glow
   const pg=ctx.createRadialGradient(pl.px,pl.py,0,pl.px,pl.py,CELL);
@@ -551,6 +565,11 @@ function loop(ts){
       if(dx)tryMove(pl,dx,0,PSPEED);
       if(dy)tryMove(pl,0,dy,PSPEED);
     }
+
+    // Ping timer
+    pingTimer-=dt;
+    if(pingTimer<=0){pingFlash=PING_DURATION;pingTimer=PING_INTERVAL;}
+    if(pingFlash>0)pingFlash-=dt;
 
     // Monster movement
     if(document.getElementById('msg').style.display==='block')return;
