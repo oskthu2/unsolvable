@@ -16,7 +16,11 @@ canvas{display:block;image-rendering:pixelated}
 #hint{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.7);color:#556;font-size:11px;font-family:monospace;padding:3px 8px;text-align:center;pointer-events:none;z-index:5}
 
 /* ── LAPTOP OVERLAY ── */
-#laptop{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.88);display:none;justify-content:center;align-items:center;z-index:20}
+#laptop{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.88);display:none;justify-content:center;align-items:flex-end;z-index:20;padding-bottom:20px}
+@keyframes slideUp{from{transform:translateY(110%);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes slideDown{from{transform:translateY(0);opacity:1}to{transform:translateY(110%);opacity:0}}
+#laptop.opening #lscreen{animation:slideUp 0.35s cubic-bezier(0.2,0.8,0.3,1) forwards}
+#laptop.closing #lscreen{animation:slideDown 0.25s cubic-bezier(0.4,0,1,1) forwards}
 
 #lscreen{
   width:700px;height:520px;
@@ -554,11 +558,20 @@ function fileCharges(){
 function openLaptop(){
   if(dead||won)return;
   laptopOpen=true;
-  document.getElementById('laptop').style.display='flex';
+  const el=document.getElementById('laptop');
+  el.style.display='flex';
+  el.classList.remove('closing');
+  el.classList.add('opening');
 }
 function closeLaptop(){
   laptopOpen=false;
-  document.getElementById('laptop').style.display='none';
+  const el=document.getElementById('laptop');
+  el.classList.remove('opening');
+  el.classList.add('closing');
+  setTimeout(()=>{
+    el.style.display='none';
+    el.classList.remove('closing');
+  },250);
 }
 
 // ─── MESSAGES ─────────────────────────────────────────────────
