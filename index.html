@@ -184,12 +184,12 @@ canvas{display:block;image-rendering:pixelated}
         <div style="padding:10px;height:100%">
           <div class="deskPath">C:\CASES\VOSS_MURDER\ &gt; 8 items &nbsp;|&nbsp; last modified: 11:47 PM</div>
           <div class="icons">
-            <div class="icon" onclick="openF('s1')"><div class="em">&#128193;</div><div class="lbl">SUSPECT_01<br>D.MARSH</div></div>
-            <div class="icon" onclick="openF('s2')"><div class="em">&#128193;</div><div class="lbl">SUSPECT_02<br>C.VOSS</div></div>
-            <div class="icon" onclick="openF('s3')"><div class="em">&#128193;</div><div class="lbl">SUSPECT_03<br>T.HALE</div></div>
-            <div class="icon" onclick="openF('s4')"><div class="em">&#128193;</div><div class="lbl">SUSPECT_04<br>R.FROST</div></div>
-            <div class="icon" onclick="openF('s5')"><div class="em">&#128193;</div><div class="lbl">SUSPECT_05<br>S.CRANE</div></div>
-            <div class="icon" onclick="openF('s6')"><div class="em">&#128193;</div><div class="lbl">SUSPECT_06<br>M.WEBB</div></div>
+            <div class="icon" id="si1" onclick="openF('s1')" style="opacity:0.35;cursor:not-allowed"><div class="em">&#128193;</div><div class="lbl">SUSPECT_01<br>D.MARSH</div></div>
+            <div class="icon" id="si2" onclick="openF('s2')" style="opacity:0.35;cursor:not-allowed"><div class="em">&#128193;</div><div class="lbl">SUSPECT_02<br>C.VOSS</div></div>
+            <div class="icon" id="si3" onclick="openF('s3')" style="opacity:0.35;cursor:not-allowed"><div class="em">&#128193;</div><div class="lbl">SUSPECT_03<br>T.HALE</div></div>
+            <div class="icon" id="si4" onclick="openF('s4')" style="opacity:0.35;cursor:not-allowed"><div class="em">&#128193;</div><div class="lbl">SUSPECT_04<br>R.FROST</div></div>
+            <div class="icon" id="si5" onclick="openF('s5')" style="opacity:0.35;cursor:not-allowed"><div class="em">&#128193;</div><div class="lbl">SUSPECT_05<br>S.CRANE</div></div>
+            <div class="icon" id="si6" onclick="openF('s6')" style="opacity:0.35;cursor:not-allowed"><div class="em">&#128193;</div><div class="lbl">SUSPECT_06<br>M.WEBB</div></div>
             <div class="icon" id="evIcon" onclick="openF('ev')" style="opacity:0.35;cursor:not-allowed"><div class="em">&#128208;</div><div class="lbl">EVIDENCE<br>[22 items]</div></div>
             <div class="icon" onclick="openF('ac')"><div class="em">&#9878;</div><div class="lbl">FILE<br>CHARGES</div></div>
           </div>
@@ -284,6 +284,8 @@ const TLAPTOP={px:TR_X+9*CELL+CELL/2, py:TR_Y+2*CELL+CELL/2};
 // Evidence terminal — row 15, col 23 (directly above monster start)
 const TERM_PX=48, TERM_PY=496;
 const MG_SPEED=[3,4.5,6];
+const SUSP_PX=752, SUSP_PY=48; // suspect file terminal — top-right
+const SMG_DRAIN=0.12, SMG_PRESS_VAL=0.15;
 
 // ─── MAZE (25×19, 1=wall 0=path) ─────────────────────────────
 const M = [
@@ -316,6 +318,8 @@ let evidenceFound = false;
 let mgActive=false, mgCode=[0,0,0];
 let mgDigitIndex=0, mgCurrentVal=0;
 let mgSpeedTimer=0, mgWrongFlash=0, mgSuccess=false;
+let suspFilesFound=false;
+let smgActive=false, smgBar=0, smgSuccess=false;
 let lives = 3, dead = false, won = false, laptopOpen = false;
 let pingTimer = 5, pingFlash = 0;
 const PING_INTERVAL = 5, PING_DURATION = 0.6, CLOSE_DIST = CELL * 5;
@@ -529,6 +533,88 @@ function drawMinigame(){
   ctx.textBaseline='alphabetic';ctx.textAlign='left';
 }
 
+function startSuspMinigame(){
+  if(suspFilesFound||smgActive)return;
+  smgBar=0;smgSuccess=false;
+  smgActive=true;
+}
+function smgPress(){
+  if(!smgActive||smgSuccess)return;
+  smgBar=Math.min(1,smgBar+SMG_PRESS_VAL);
+  if(smgBar>=1){
+    smgSuccess=true;
+    setTimeout(()=>{
+      smgActive=false;suspFilesFound=true;
+      for(let i=1;i<=6;i++){
+        const el=document.getElementById('si'+i);
+        if(el){el.style.opacity='1';el.style.cursor='pointer';}
+      }
+    },1500);
+  }
+}
+function drawSuspMinigame(){
+  const t=glitchT();
+  ctx.fillStyle='rgba(0,0,8,0.9)';ctx.fillRect(0,0,800,608);
+  if(t>0){
+    ctx.save();
+    ctx.translate(Math.round((Math.random()-.5)*t*10),Math.round((Math.random()-.5)*t*5));
+    const hue=((Math.random()-.5)*t*45).toFixed(0);
+    const br=(0.85+Math.random()*0.35*t).toFixed(2);
+    const sat=(1+t*Math.random()*2).toFixed(2);
+    ctx.filter=`hue-rotate(${hue}deg) brightness(${br}) saturate(${sat})`;
+  }
+  const bx=175,by=150,bw=450,bh=260;
+  ctx.fillStyle='#02020e';ctx.fillRect(bx,by,bw,bh);
+  ctx.strokeStyle='#1a3a1a';ctx.lineWidth=2;ctx.strokeRect(bx,by,bw,bh);
+  ctx.fillStyle='#06120a';ctx.fillRect(bx,by,bw,26);
+  ctx.fillStyle='#33aa55';ctx.font='bold 11px monospace';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('SUSPECT FILE CABINET  ╏  EMERGENCY OVERRIDE',400,by+13);
+  ctx.fillStyle='#445566';ctx.font='12px monospace';
+  ctx.fillText('> Magnetic lock engaged. Apply physical force to override.',400,by+50);
+  const barX=bx+40,barY=by+78,barW=bw-80,barH=34;
+  ctx.fillStyle='#060610';ctx.fillRect(barX,barY,barW,barH);
+  ctx.strokeStyle='#1a3a1a';ctx.lineWidth=1;ctx.strokeRect(barX,barY,barW,barH);
+  const fillW=Math.max(0,Math.round(smgBar*(barW-4)));
+  if(fillW>0){
+    const pct=smgBar;
+    const barCol=smgSuccess?'#00ff55':`hsl(${Math.round(120*pct)},100%,${Math.round(45+pct*20)}%)`;
+    ctx.fillStyle=barCol;ctx.fillRect(barX+2,barY+2,fillW,barH-4);
+    ctx.save();
+    ctx.shadowColor=barCol;ctx.shadowBlur=16;
+    ctx.fillStyle=barCol;ctx.fillRect(barX+2,barY+2,fillW,barH-4);
+    ctx.restore();
+  }
+  ctx.fillStyle='#667788';ctx.font='11px monospace';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('OVERRIDE PROGRESS',400,barY-14);
+  ctx.fillStyle=smgSuccess?'#00ff55':'#ccddee';
+  ctx.font='bold 15px monospace';
+  ctx.fillText(Math.round(smgBar*100)+'%',400,barY+barH/2);
+  ctx.font='12px monospace';
+  if(smgSuccess){
+    ctx.fillStyle='#00ff55';ctx.fillText('ACCESS GRANTED — Suspect files retrieved.',400,by+148);
+  } else {
+    ctx.fillStyle='#334455';ctx.fillText('Press  [SPACE]  rapidly to force the lock    [ESC / K] cancel',400,by+148);
+    if(smgBar>0.05){
+      ctx.fillStyle=`rgba(255,160,40,${Math.min(0.8,smgBar*1.4)})`;
+      ctx.fillText('Lock is resetting — keep pressing!',400,by+174);
+    }
+  }
+  if(t>0){
+    ctx.restore();ctx.filter='none';
+    if(Math.random()<t*0.4){
+      const n=Math.ceil(t*3);
+      for(let i=0;i<n;i++){
+        const gy=by+Math.random()*bh,gh=Math.random()*5*t+0.5;
+        ctx.fillStyle=Math.random()>.5?`rgba(255,20,60,${(t*.3).toFixed(2)})`:`rgba(0,255,180,${(t*.25).toFixed(2)})`;
+        ctx.fillRect(bx,gy,bw,gh);
+      }
+    }
+  }
+  ctx.textBaseline='alphabetic';ctx.textAlign='left';
+}
+
 function draw(){
   ctx.fillStyle='#050510';
   ctx.fillRect(0,0,800,608);
@@ -575,6 +661,32 @@ function draw(){
         ctx.fillStyle='rgba(0,0,0,0.85)';ctx.fillRect(TERM_PX-46,TERM_PY-32,92,20);
         ctx.fillStyle='#00ffcc';ctx.font='bold 11px monospace';ctx.textAlign='center';
         ctx.fillText('[K]  INTERACT',TERM_PX,TERM_PY-17);ctx.textAlign='left';
+        ctx.restore();
+      }
+    }
+  }
+
+  // Suspect file cabinet icon — fades in by proximity
+  if(!suspFilesFound){
+    const sd=Math.hypot(pl.px-SUSP_PX,pl.py-SUSP_PY);
+    const SF_START=CELL*4.5,SF_FULL=CELL*1.5;
+    const suspAlpha=sd<SF_FULL?1:sd<SF_START?1-(sd-SF_FULL)/(SF_START-SF_FULL):0;
+    if(suspAlpha>0){
+      ctx.save();ctx.globalAlpha=suspAlpha;
+      ctx.shadowColor='rgba(30,200,80,0.7)';ctx.shadowBlur=14;
+      ctx.fillStyle='#0a1c10';ctx.fillRect(SUSP_PX-12,SUSP_PY-10,24,22);
+      ctx.strokeStyle='#1a4828';ctx.lineWidth=1;ctx.strokeRect(SUSP_PX-12,SUSP_PY-10,24,22);
+      ctx.fillStyle='#1a4828';ctx.fillRect(SUSP_PX-11,SUSP_PY+1,22,1);
+      ctx.fillStyle='rgba(30,200,80,0.55)';
+      ctx.fillRect(SUSP_PX-4,SUSP_PY-6,8,2);
+      ctx.fillRect(SUSP_PX-4,SUSP_PY+4,8,2);
+      ctx.shadowBlur=0;
+      ctx.restore();
+      if(sd<56&&!smgActive){
+        ctx.save();ctx.globalAlpha=suspAlpha;
+        ctx.fillStyle='rgba(0,0,0,0.85)';ctx.fillRect(SUSP_PX-46,SUSP_PY-32,92,20);
+        ctx.fillStyle='#00ffcc';ctx.font='bold 11px monospace';ctx.textAlign='center';
+        ctx.fillText('[K]  INTERACT',SUSP_PX,SUSP_PY-17);ctx.textAlign='left';
         ctx.restore();
       }
     }
@@ -647,8 +759,9 @@ function draw(){
   // Transition fade-in from tutorial
   if(fadeOverlay>0){ctx.fillStyle=`rgba(0,0,0,${fadeOverlay})`;ctx.fillRect(0,0,800,608);}
 
-  // Minigame overlay (on top of everything)
+  // Minigame overlays (on top of everything)
   if(mgActive)drawMinigame();
+  else if(smgActive)drawSuspMinigame();
 
   updateSbar(dist);
 }
@@ -740,6 +853,10 @@ const folders={
 };
 
 function openF(id){
+  if(['s1','s2','s3','s4','s5','s6'].includes(id)&&!suspFilesFound){
+    showMsg('Suspect files not retrieved.\n\nFind and override the file cabinet\nto unlock them.');
+    return;
+  }
   if(id==='ev'&&!evidenceFound){
     showMsg('Evidence file not found.\n\nYou must retrieve it before\naccessing the evidence inventory.');
     return;
@@ -992,8 +1109,8 @@ function loop(ts){
   updateGlitch();
 
   if(!dead&&!won&&!caught){
-    // Player movement (frozen during minigame)
-    if(!laptopOpen&&!mgActive){
+    // Player movement (frozen during minigames)
+    if(!laptopOpen&&!mgActive&&!smgActive){
       let dx=0,dy=0;
       if(keys['ArrowLeft']||keys['a']||keys['A'])dx=-1;
       if(keys['ArrowRight']||keys['d']||keys['D'])dx=1;
@@ -1007,6 +1124,11 @@ function loop(ts){
     pingTimer-=dt;
     if(pingTimer<=0){pingFlash=PING_DURATION;pingTimer=PING_INTERVAL;}
     if(pingFlash>0)pingFlash-=dt;
+
+    // Mash minigame bar drain
+    if(smgActive&&!smgSuccess){
+      smgBar=Math.max(0,smgBar-SMG_DRAIN*dt);
+    }
 
     // Minigame spinner update
     if(mgActive&&!mgSuccess){
@@ -1055,12 +1177,19 @@ document.addEventListener('keydown',e=>{
   }
   if((e.key==='e'||e.key==='E'||e.key==='k'||e.key==='K')&&phase==='maze'&&!laptopOpen){
     if(mgActive){mgActive=false;}
+    else if(smgActive){smgActive=false;}
     else if(!evidenceFound&&Math.hypot(pl.px-TERM_PX,pl.py-TERM_PY)<56)startMinigame();
+    else if(!suspFilesFound&&Math.hypot(pl.px-SUSP_PX,pl.py-SUSP_PY)<56)startSuspMinigame();
   }
-  if((e.key===' '||e.key==='Enter')&&mgActive){mgLock();e.preventDefault();}
-  if((e.key==='l'||e.key==='L')&&phase==='maze'&&!mgActive){laptopOpen?closeLaptop():openLaptop();}
-  if(e.key==='Escape'){if(mgActive){mgActive=false;}else closeLaptop();}
-  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();
+  if(e.key===' '){
+    if(mgActive){mgLock();}
+    else if(smgActive){smgPress();}
+    e.preventDefault();
+  }
+  if(e.key==='Enter'&&mgActive){mgLock();}
+  if((e.key==='l'||e.key==='L')&&phase==='maze'&&!mgActive&&!smgActive){laptopOpen?closeLaptop():openLaptop();}
+  if(e.key==='Escape'){if(mgActive){mgActive=false;}else if(smgActive){smgActive=false;}else closeLaptop();}
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))e.preventDefault();
 });
 document.addEventListener('keyup',e=>keys[e.key]=false);
 
