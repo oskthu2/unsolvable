@@ -190,7 +190,7 @@ canvas{display:block;image-rendering:pixelated}
             <div class="icon" onclick="openF('s4')"><div class="em">&#128193;</div><div class="lbl">SUSPECT_04<br>R.FROST</div></div>
             <div class="icon" onclick="openF('s5')"><div class="em">&#128193;</div><div class="lbl">SUSPECT_05<br>S.CRANE</div></div>
             <div class="icon" onclick="openF('s6')"><div class="em">&#128193;</div><div class="lbl">SUSPECT_06<br>M.WEBB</div></div>
-            <div class="icon" onclick="openF('ev')"><div class="em">&#128208;</div><div class="lbl">EVIDENCE<br>[22 items]</div></div>
+            <div class="icon" id="evIcon" onclick="openF('ev')" style="opacity:0.35;cursor:not-allowed"><div class="em">&#128208;</div><div class="lbl">EVIDENCE<br>[22 items]</div></div>
             <div class="icon" onclick="openF('ac')"><div class="em">&#9878;</div><div class="lbl">FILE<br>CHARGES</div></div>
           </div>
           <div class="caseNote">
@@ -229,7 +229,8 @@ canvas{display:block;image-rendering:pixelated}
           <option value="webb">Marcus Webb &nbsp;(Private Investor)</option>
         </select>
         <label>SELECT KEY EVIDENCE:</label>
-        <select id="evSel" class="ap">
+        <div id="evMissing" style="color:#cc4422;font-size:11px;font-family:'Courier New',monospace;padding:6px;border:1px solid #330000;margin-bottom:10px;line-height:1.6;">&#9888; FILE MISSING &mdash; Evidence inventory not retrieved.<br>Find the field terminal in the bottom-right of the mansion.</div>
+        <select id="evSel" class="ap" style="display:none">
           <option value="">-- SELECT EVIDENCE --</option>
           <option value="poison">01. Poison Vial</option>
           <option value="cathair">02. Cat Hair Sample</option>
@@ -280,6 +281,9 @@ const PSPEED = 2.8, MSPEED = 0.5;
 // Tutorial room (13×9 tiles, centred on 800×608)
 const TR_X=192, TR_Y=160, TR_C=13, TR_R=9;
 const TLAPTOP={px:TR_X+9*CELL+CELL/2, py:TR_Y+2*CELL+CELL/2};
+// Evidence terminal — row 15, col 23 (directly above monster start)
+const TERM_PX=752, TERM_PY=496;
+const MG_SPEED=[3,4.5,6];
 
 // ─── MAZE (25×19, 1=wall 0=path) ─────────────────────────────
 const M = [
@@ -308,6 +312,10 @@ const M = [
 // ─── GAME STATE ───────────────────────────────────────────────
 let phase = 'tutorial';
 let fadeOverlay = 0, fadingOut = false, fadingIn = false;
+let evidenceFound = false;
+let mgActive=false, mgCode=[0,0,0];
+let mgDigitIndex=0, mgCurrentVal=0;
+let mgSpeedTimer=0, mgWrongFlash=0, mgSuccess=false;
 let lives = 3, dead = false, won = false, laptopOpen = false;
 let pingTimer = 5, pingFlash = 0;
 const PING_INTERVAL = 5, PING_DURATION = 0.6, CLOSE_DIST = CELL * 5;
@@ -430,6 +438,73 @@ function drawTutorial(){
   if(fadeOverlay>0){ctx.fillStyle=`rgba(0,0,0,${fadeOverlay})`;ctx.fillRect(0,0,800,608);}
 }
 
+// ─── MINIGAME ─────────────────────────────────────────────────
+function startMinigame(){
+  if(evidenceFound||mgActive)return;
+  mgCode=[Math.floor(Math.random()*10),Math.floor(Math.random()*10),Math.floor(Math.random()*10)];
+  mgDigitIndex=0;mgCurrentVal=0;mgSpeedTimer=0;mgWrongFlash=0;mgSuccess=false;
+  mgActive=true;
+}
+function mgLock(){
+  if(!mgActive||mgSuccess||mgWrongFlash>0)return;
+  if(mgCurrentVal===mgCode[mgDigitIndex]){
+    mgDigitIndex++;mgCurrentVal=0;mgSpeedTimer=0;
+    if(mgDigitIndex>=3){
+      mgSuccess=true;
+      setTimeout(()=>{mgActive=false;evidenceFound=true;
+        document.getElementById('evIcon').style.opacity='1';
+        document.getElementById('evIcon').style.cursor='pointer';
+      },1500);
+    }
+  } else {
+    mgWrongFlash=0.5;
+  }
+}
+function drawMinigame(){
+  ctx.fillStyle='rgba(0,0,8,0.9)';ctx.fillRect(0,0,800,608);
+  const bx=175,by=134,bw=450,bh=320;
+  ctx.fillStyle='#02020e';ctx.fillRect(bx,by,bw,bh);
+  ctx.strokeStyle=mgWrongFlash>0?'#881100':'#1a1a3a';ctx.lineWidth=2;ctx.strokeRect(bx,by,bw,bh);
+  // Title bar
+  ctx.fillStyle='#06061a';ctx.fillRect(bx,by,bw,26);
+  ctx.fillStyle='#3344aa';ctx.font='bold 11px monospace';ctx.textAlign='center';
+  ctx.fillText('EVIDENCE TERMINAL  ╏  SECURE ACCESS',400,by+17);
+  // Info
+  ctx.fillStyle='#445566';ctx.font='12px monospace';
+  ctx.fillText('> Secure file detected. Enter the 3-digit access code.',400,by+56);
+  // Target code label + boxes
+  ctx.fillStyle='#667788';ctx.font='11px monospace';
+  ctx.fillText('TARGET CODE:',400,by+92);
+  const tx=[320,378,436],tsz=44;
+  for(let i=0;i<3;i++){
+    ctx.fillStyle='#060616';ctx.fillRect(tx[i],by+100,tsz,tsz);
+    ctx.strokeStyle='#1a2a44';ctx.lineWidth=1;ctx.strokeRect(tx[i],by+100,tsz,tsz);
+    ctx.fillStyle='#6688cc';ctx.font='bold 28px monospace';ctx.textAlign='center';
+    ctx.fillText(mgCode[i],tx[i]+tsz/2,by+133);
+  }
+  // Input label + boxes
+  ctx.fillStyle='#667788';ctx.font='11px monospace';ctx.textAlign='center';
+  ctx.fillText('YOUR INPUT:',400,by+172);
+  const ix=[294,370,446],isz=60;
+  for(let i=0;i<3;i++){
+    const st=i<mgDigitIndex?'done':i===mgDigitIndex?'active':'wait';
+    ctx.fillStyle=st==='done'?'#001800':st==='active'?(mgWrongFlash>0?'#1a0000':'#001020'):'#060610';
+    ctx.fillRect(ix[i],by+182,isz,isz);
+    ctx.strokeStyle=st==='done'?'#00aa33':st==='active'?(mgWrongFlash>0?'#cc2200':'#2255aa'):'#141430';
+    ctx.lineWidth=2;ctx.strokeRect(ix[i],by+182,isz,isz);
+    ctx.font='bold 42px monospace';ctx.textAlign='center';
+    if(st==='done'){ctx.fillStyle='#00ff55';ctx.fillText(mgCode[i],ix[i]+isz/2,by+237);}
+    else if(st==='active'){ctx.fillStyle=mgWrongFlash>0?'#ff3300':'#ffffff';ctx.fillText(mgCurrentVal,ix[i]+isz/2,by+237);}
+    else{ctx.fillStyle='#1a1a3a';ctx.fillText('—',ix[i]+isz/2,by+237);}
+  }
+  // Status
+  ctx.font='12px monospace';ctx.textAlign='center';
+  if(mgSuccess){ctx.fillStyle='#00ff55';ctx.fillText('ACCESS GRANTED — Evidence file retrieved.',400,by+270);}
+  else if(mgWrongFlash>0){ctx.fillStyle='#ff3300';ctx.fillText('INCORRECT — resetting code entry...',400,by+270);}
+  else{ctx.fillStyle='#334455';ctx.fillText('Press  [SPACE]  to stop current digit    [ESC] cancel',400,by+270);}
+  ctx.textAlign='left';
+}
+
 function draw(){
   ctx.fillStyle='#050510';
   ctx.fillRect(0,0,800,608);
@@ -453,6 +528,25 @@ function draw(){
         ctx.fillStyle='rgba(80,60,120,0.07)';
         ctx.fillRect(x+CELL/2-1,y+CELL/2-1,2,2);
       }
+    }
+  }
+
+  // Evidence terminal icon
+  if(!evidenceFound){
+    ctx.save();
+    ctx.shadowColor='rgba(30,100,255,0.7)';ctx.shadowBlur=14;
+    ctx.fillStyle='#0a1528';ctx.fillRect(TERM_PX-13,TERM_PY-11,26,19);
+    ctx.strokeStyle='#1a3a6a';ctx.lineWidth=1;ctx.strokeRect(TERM_PX-13,TERM_PY-11,26,19);
+    ctx.fillStyle='#001535';ctx.fillRect(TERM_PX-9,TERM_PY-8,18,12);
+    ctx.fillStyle='rgba(30,80,200,0.55)';ctx.fillRect(TERM_PX-7,TERM_PY-6,14,8);
+    ctx.shadowBlur=0;
+    ctx.fillStyle='#0a1020';ctx.fillRect(TERM_PX-3,TERM_PY+8,6,5); // stand
+    ctx.restore();
+    const pd=Math.hypot(pl.px-TERM_PX,pl.py-TERM_PY);
+    if(pd<56&&!mgActive){
+      ctx.fillStyle='rgba(0,0,0,0.85)';ctx.fillRect(TERM_PX-60,TERM_PY-32,120,18);
+      ctx.fillStyle='#aaccff';ctx.font='bold 11px monospace';ctx.textAlign='center';
+      ctx.fillText('[E]  Evidence Terminal',TERM_PX,TERM_PY-19);ctx.textAlign='left';
     }
   }
 
@@ -522,6 +616,9 @@ function draw(){
 
   // Transition fade-in from tutorial
   if(fadeOverlay>0){ctx.fillStyle=`rgba(0,0,0,${fadeOverlay})`;ctx.fillRect(0,0,800,608);}
+
+  // Minigame overlay (on top of everything)
+  if(mgActive)drawMinigame();
 
   updateSbar(dist);
 }
@@ -613,7 +710,16 @@ const folders={
 };
 
 function openF(id){
+  if(id==='ev'&&!evidenceFound){
+    showMsg('Evidence file not found.\n\nLocate the field terminal in the\nbottom-right section of the mansion.');
+    return;
+  }
   if(id==='ac'){
+    // Show/hide evidence select based on whether file is retrieved
+    const sel=document.getElementById('evSel');
+    const missing=document.getElementById('evMissing');
+    if(evidenceFound){sel.style.display='block';missing.style.display='none';}
+    else{sel.style.display='none';missing.style.display='block';}
     document.getElementById('deskView').style.display='none';
     document.getElementById('fileView').style.display='none';
     document.getElementById('accuseView').style.display='flex';
@@ -639,7 +745,8 @@ function goBack(){
 function fileCharges(){
   const s=document.getElementById('suspSel').value;
   const e=document.getElementById('evSel').value;
-  if(!s||!e){showMsg('Select both a suspect\nand a piece of evidence.');return;}
+  if(!evidenceFound||!e){showMsg('Evidence file missing.\nRetrieve it from the field terminal\nbefore filing charges.');return;}
+  if(!s){showMsg('Select a suspect\nbefore filing charges.');return;}
   closeLaptop();
   const cs=s==='frost';
   const ce=e==='cufflink'||e==='letter';
@@ -825,7 +932,7 @@ function loop(ts){
     if(fadeOverlay>=1){
       fadingOut=false;phase='maze';pl.px=48;pl.py=48;fadingIn=true;
       document.getElementById('hud').style.display='flex';
-      document.getElementById('hint').innerHTML='WASD / Arrow Keys &nbsp;&#9135;&nbsp; [L] Open Laptop &nbsp;&#9135;&nbsp; [ESC] Close Laptop &nbsp;&#9135;&nbsp; Investigate the case &mdash; but don\'t get caught!';
+      document.getElementById('hint').innerHTML='WASD / Arrow Keys &nbsp;&#9135;&nbsp; [L] Laptop &nbsp;&#9135;&nbsp; [E] Terminal &nbsp;&#9135;&nbsp; [ESC] Close &nbsp;&#9135;&nbsp; Investigate the case &mdash; but don\'t get caught!';
     }
   }
   if(fadingIn){
@@ -852,8 +959,8 @@ function loop(ts){
   updateGlitch();
 
   if(!dead&&!won&&!caught){
-    // Player movement
-    if(!laptopOpen){
+    // Player movement (frozen during minigame)
+    if(!laptopOpen&&!mgActive){
       let dx=0,dy=0;
       if(keys['ArrowLeft']||keys['a']||keys['A'])dx=-1;
       if(keys['ArrowRight']||keys['d']||keys['D'])dx=1;
@@ -868,27 +975,40 @@ function loop(ts){
     if(pingTimer<=0){pingFlash=PING_DURATION;pingTimer=PING_INTERVAL;}
     if(pingFlash>0)pingFlash-=dt;
 
-    // Monster movement
-    if(document.getElementById('msg').style.display==='block')return;
-    mn.pt-=dt;
-    if(mn.pt<=0){
-      mn.pt=0.75;
-      const mg=gridOf(mn.px,mn.py);
-      const pg=gridOf(pl.px,pl.py);
-      mn.path=bfs(mg.x,mg.y,pg.x,pg.y);
-      mn.path.shift();
-    }
-    if(mn.path.length>0){
-      const[tc,tr]=mn.path[0];
-      const tx=tc*CELL+CELL/2,ty=tr*CELL+CELL/2;
-      const dx=tx-mn.px,dy=ty-mn.py;
-      const d=Math.hypot(dx,dy);
-      if(d<MSPEED+0.5){mn.px=tx;mn.py=ty;mn.path.shift();}
-      else{mn.px+=dx/d*MSPEED;mn.py+=dy/d*MSPEED;}
+    // Minigame spinner update
+    if(mgActive&&!mgSuccess){
+      if(mgWrongFlash>0){
+        mgWrongFlash-=dt;
+        if(mgWrongFlash<=0){mgDigitIndex=0;mgCurrentVal=0;mgSpeedTimer=0;}
+      } else {
+        mgSpeedTimer+=dt*MG_SPEED[Math.min(mgDigitIndex,2)];
+        if(mgSpeedTimer>=1){mgSpeedTimer-=1;mgCurrentVal=(mgCurrentVal+1)%10;}
+      }
     }
 
-    // Catch check
-    if(Math.hypot(mn.px-pl.px,mn.py-pl.py)<CELL*0.65){
+    // Monster movement (frozen during minigame)
+    if(document.getElementById('msg').style.display==='block')return;
+    if(!mgActive){
+      mn.pt-=dt;
+      if(mn.pt<=0){
+        mn.pt=0.75;
+        const mg=gridOf(mn.px,mn.py);
+        const pg=gridOf(pl.px,pl.py);
+        mn.path=bfs(mg.x,mg.y,pg.x,pg.y);
+        mn.path.shift();
+      }
+      if(mn.path.length>0){
+        const[tc,tr]=mn.path[0];
+        const tx=tc*CELL+CELL/2,ty=tr*CELL+CELL/2;
+        const dx=tx-mn.px,dy=ty-mn.py;
+        const d=Math.hypot(dx,dy);
+        if(d<MSPEED+0.5){mn.px=tx;mn.py=ty;mn.path.shift();}
+        else{mn.px+=dx/d*MSPEED;mn.py+=dy/d*MSPEED;}
+      }
+    }
+
+    // Catch check (not during minigame)
+    if(!mgActive&&Math.hypot(mn.px-pl.px,mn.py-pl.py)<CELL*0.65){
       triggerCatch();
     }
   }
@@ -902,8 +1022,12 @@ document.addEventListener('keydown',e=>{
   if((e.key==='k'||e.key==='K')&&phase==='tutorial'&&!fadingOut){
     if(Math.hypot(pl.px-TLAPTOP.px,pl.py-TLAPTOP.py)<80)fadingOut=true;
   }
-  if((e.key==='l'||e.key==='L')&&phase==='maze'){laptopOpen?closeLaptop():openLaptop();}
-  if(e.key==='Escape')closeLaptop();
+  if((e.key==='e'||e.key==='E')&&phase==='maze'&&!laptopOpen&&!mgActive&&!evidenceFound){
+    if(Math.hypot(pl.px-TERM_PX,pl.py-TERM_PY)<56)startMinigame();
+  }
+  if((e.key===' '||e.key==='Enter')&&mgActive){mgLock();e.preventDefault();}
+  if((e.key==='l'||e.key==='L')&&phase==='maze'&&!mgActive){laptopOpen?closeLaptop():openLaptop();}
+  if(e.key==='Escape'){if(mgActive){mgActive=false;}else closeLaptop();}
   if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();
 });
 document.addEventListener('keyup',e=>keys[e.key]=false);
