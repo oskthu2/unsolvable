@@ -466,10 +466,10 @@ function drawMinigame(){
   // Apply glitch transform + filter to everything inside
   if(t>0){
     ctx.save();
-    ctx.translate(Math.round((Math.random()-.5)*t*22),Math.round((Math.random()-.5)*t*12));
-    const hue=((Math.random()-.5)*t*90).toFixed(0);
-    const br=(0.7+Math.random()*0.7*t).toFixed(2);
-    const sat=(1+t*Math.random()*4).toFixed(2);
+    ctx.translate(Math.round((Math.random()-.5)*t*10),Math.round((Math.random()-.5)*t*5));
+    const hue=((Math.random()-.5)*t*45).toFixed(0);
+    const br=(0.85+Math.random()*0.35*t).toFixed(2);
+    const sat=(1+t*Math.random()*2).toFixed(2);
     ctx.filter=`hue-rotate(${hue}deg) brightness(${br}) saturate(${sat})`;
   }
   const bx=175,by=130,bw=450,bh=308;
@@ -517,11 +517,11 @@ function drawMinigame(){
   // End glitch — restore then draw bars on top
   if(t>0){
     ctx.restore();ctx.filter='none';
-    if(Math.random()<t*0.7){
-      const n=Math.ceil(t*7);
+    if(Math.random()<t*0.4){
+      const n=Math.ceil(t*3);
       for(let i=0;i<n;i++){
-        const gy=by+Math.random()*bh,gh=Math.random()*10*t+0.5;
-        ctx.fillStyle=Math.random()>.5?`rgba(255,20,60,${(t*.5).toFixed(2)})`:`rgba(0,255,180,${(t*.4).toFixed(2)})`;
+        const gy=by+Math.random()*bh,gh=Math.random()*5*t+0.5;
+        ctx.fillStyle=Math.random()>.5?`rgba(255,20,60,${(t*.3).toFixed(2)})`:`rgba(0,255,180,${(t*.25).toFixed(2)})`;
         ctx.fillRect(bx,gy,bw,gh);
       }
     }
