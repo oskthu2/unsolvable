@@ -153,8 +153,10 @@ canvas{display:block;image-rendering:pixelated}
   margin-top:24px;background:#110000;color:#cc2200;
   border:1px solid #660000;padding:8px 24px;cursor:pointer;
   font-family:'Courier New',monospace;font-size:13px;
-  display:none;letter-spacing:2px;
+  display:none;letter-spacing:2px;opacity:0;
+  transition:opacity 0.8s ease;
 }
+#cfBtn.visible{opacity:1}
 #cfBtn:hover{background:#220000}
 </style>
 </head>
@@ -712,6 +714,7 @@ function showCaseFailed(reason){
       } else {
         bodyEl.textContent=fullBody;
         btn.style.display='block';
+        requestAnimationFrame(()=>requestAnimationFrame(()=>btn.classList.add('visible')));
       }
     }
     typeTitle();
