@@ -182,14 +182,9 @@ canvas{display:block;image-rendering:pixelated}
       <!-- Desktop -->
       <div id="deskView" style="flex:1;overflow:hidden">
         <div style="padding:10px;height:100%">
-          <div class="deskPath">C:\CASES\VOSS_MURDER\ &gt; 8 items &nbsp;|&nbsp; last modified: 11:47 PM</div>
+          <div class="deskPath">C:\CASES\VOSS_MURDER\ &gt; 3 items &nbsp;|&nbsp; last modified: 11:47 PM</div>
           <div class="icons">
-            <div class="icon" id="si1" onclick="openF('s1')" style="opacity:0.35;cursor:not-allowed"><div class="em">&#128193;</div><div class="lbl">SUSPECT_01<br>D.MARSH</div></div>
-            <div class="icon" id="si2" onclick="openF('s2')" style="opacity:0.35;cursor:not-allowed"><div class="em">&#128193;</div><div class="lbl">SUSPECT_02<br>C.VOSS</div></div>
-            <div class="icon" id="si3" onclick="openF('s3')" style="opacity:0.35;cursor:not-allowed"><div class="em">&#128193;</div><div class="lbl">SUSPECT_03<br>T.HALE</div></div>
-            <div class="icon" id="si4" onclick="openF('s4')" style="opacity:0.35;cursor:not-allowed"><div class="em">&#128193;</div><div class="lbl">SUSPECT_04<br>R.FROST</div></div>
-            <div class="icon" id="si5" onclick="openF('s5')" style="opacity:0.35;cursor:not-allowed"><div class="em">&#128193;</div><div class="lbl">SUSPECT_05<br>S.CRANE</div></div>
-            <div class="icon" id="si6" onclick="openF('s6')" style="opacity:0.35;cursor:not-allowed"><div class="em">&#128193;</div><div class="lbl">SUSPECT_06<br>M.WEBB</div></div>
+            <div class="icon" id="suspFolder" onclick="openSuspectFolder()" style="opacity:0.35;cursor:not-allowed"><div class="em">&#128274;</div><div class="lbl">SUSPECTS<br>[6 files]</div></div>
             <div class="icon" id="evIcon" onclick="openF('ev')" style="opacity:0.35;cursor:not-allowed"><div class="em">&#128208;</div><div class="lbl">EVIDENCE<br>[22 items]</div></div>
             <div class="icon" onclick="openF('ac')"><div class="em">&#9878;</div><div class="lbl">FILE<br>CHARGES</div></div>
           </div>
@@ -208,6 +203,25 @@ canvas{display:block;image-rendering:pixelated}
           <span id="fvPath">C:\CASES\VOSS_MURDER\</span>
         </div>
         <div class="fc" id="fvContent"></div>
+      </div>
+
+      <!-- Suspect folder view -->
+      <div id="folderView" style="display:none;flex-direction:column;height:100%">
+        <div class="fvbar">
+          <button class="bbtn" onclick="goBack()">&#9668; BACK</button>
+          <span>C:\CASES\VOSS_MURDER\SUSPECTS\</span>
+        </div>
+        <div style="padding:10px;flex:1;overflow:hidden">
+          <div class="deskPath">C:\CASES\VOSS_MURDER\SUSPECTS\ &gt; 6 items</div>
+          <div class="icons">
+            <div class="icon" onclick="openSuspect('s1')"><div class="em">&#128196;</div><div class="lbl">SUSPECT_01<br>D.MARSH</div></div>
+            <div class="icon" onclick="openSuspect('s2')"><div class="em">&#128196;</div><div class="lbl">SUSPECT_02<br>C.VOSS</div></div>
+            <div class="icon" onclick="openSuspect('s3')"><div class="em">&#128196;</div><div class="lbl">SUSPECT_03<br>T.HALE</div></div>
+            <div class="icon" onclick="openSuspect('s4')"><div class="em">&#128196;</div><div class="lbl">SUSPECT_04<br>R.FROST</div></div>
+            <div class="icon" onclick="openSuspect('s5')"><div class="em">&#128196;</div><div class="lbl">SUSPECT_05<br>S.CRANE</div></div>
+            <div class="icon" onclick="openSuspect('s6')"><div class="em">&#128196;</div><div class="lbl">SUSPECT_06<br>M.WEBB</div></div>
+          </div>
+        </div>
       </div>
 
       <!-- Accuse panel -->
@@ -320,6 +334,7 @@ let mgDigitIndex=0, mgCurrentVal=0;
 let mgSpeedTimer=0, mgWrongFlash=0, mgSuccess=false;
 let suspFilesFound=false;
 let smgActive=false, smgBar=0, smgSuccess=false;
+let fvFrom='desk';
 let lives = 3, dead = false, won = false, laptopOpen = false;
 let pingTimer = 5, pingFlash = 0;
 const PING_INTERVAL = 5, PING_DURATION = 0.6, CLOSE_DIST = CELL * 5;
@@ -545,10 +560,8 @@ function smgPress(){
     smgSuccess=true;
     setTimeout(()=>{
       smgActive=false;suspFilesFound=true;
-      for(let i=1;i<=6;i++){
-        const el=document.getElementById('si'+i);
-        if(el){el.style.opacity='1';el.style.cursor='pointer';}
-      }
+      const el=document.getElementById('suspFolder');
+      if(el){el.style.opacity='1';el.style.cursor='pointer';el.querySelector('.em').textContent='📂';}
     },1500);
   }
 }
@@ -852,30 +865,44 @@ const folders={
 <div class="clue"><b>22. ANONYMOUS TIP-OFF LETTER</b> &mdash; Delivered to the investigating officer by hand the morning after the murder. Typed, unsigned. Text: <i>"Look at who benefits most when Voss is gone. The answer has been sitting in that study the whole time. Check the safe."</i> Paper untraceable. Source unknown.</div>`},
 };
 
-function openF(id){
-  if(['s1','s2','s3','s4','s5','s6'].includes(id)&&!suspFilesFound){
-    showMsg('Suspect files not retrieved.\n\nFind and override the file cabinet\nto unlock them.');
+function hideAllViews(){
+  ['deskView','fileView','accuseView','folderView'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.style.display='none';
+  });
+}
+
+function openSuspectFolder(){
+  if(!suspFilesFound){
+    showMsg('Suspect files cabinet is locked.\n\nOverride the cabinet to unlock.');
     return;
   }
+  hideAllViews();
+  document.getElementById('folderView').style.display='flex';
+  document.getElementById('pathBar').textContent='C:\\CASES\\VOSS_MURDER\\SUSPECTS\\';
+}
+
+function openSuspect(id){
+  fvFrom='folder';
+  openF(id);
+}
+
+function openF(id){
   if(id==='ev'&&!evidenceFound){
     showMsg('Evidence file not found.\n\nYou must retrieve it before\naccessing the evidence inventory.');
     return;
   }
   if(id==='ac'){
-    // Show/hide evidence select based on whether file is retrieved
     const sel=document.getElementById('evSel');
     const missing=document.getElementById('evMissing');
     if(evidenceFound){sel.style.display='block';missing.style.display='none';}
     else{sel.style.display='none';missing.style.display='block';}
-    document.getElementById('deskView').style.display='none';
-    document.getElementById('fileView').style.display='none';
+    hideAllViews();
     document.getElementById('accuseView').style.display='flex';
     document.getElementById('pathBar').textContent='C:\\CASES\\VOSS_MURDER\\CHARGES.exe';
     return;
   }
   const d=folders[id];if(!d)return;
-  document.getElementById('deskView').style.display='none';
-  document.getElementById('accuseView').style.display='none';
+  hideAllViews();
   document.getElementById('fvPath').textContent=d.path;
   document.getElementById('fvContent').innerHTML=d.html;
   document.getElementById('fileView').style.display='flex';
@@ -883,10 +910,16 @@ function openF(id){
 }
 
 function goBack(){
-  document.getElementById('fileView').style.display='none';
-  document.getElementById('accuseView').style.display='none';
-  document.getElementById('deskView').style.display='block';
-  document.getElementById('pathBar').textContent='C:\\CASES\\VOSS_MURDER\\';
+  const from=fvFrom;
+  fvFrom='desk';
+  hideAllViews();
+  if(from==='folder'){
+    document.getElementById('folderView').style.display='flex';
+    document.getElementById('pathBar').textContent='C:\\CASES\\VOSS_MURDER\\SUSPECTS\\';
+  } else {
+    document.getElementById('deskView').style.display='block';
+    document.getElementById('pathBar').textContent='C:\\CASES\\VOSS_MURDER\\';
+  }
 }
 
 function fileCharges(){
