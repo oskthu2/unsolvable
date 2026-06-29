@@ -277,7 +277,7 @@ canvas{display:block;image-rendering:pixelated}
 <script>
 // ─── CONSTANTS ───────────────────────────────────────────────
 const CELL = 32, COLS = 25, ROWS = 19;
-const PSPEED = 2.8, MSPEED = 0.5;
+const PSPEED = 2.8, MSPEED = 0.6;
 // Tutorial room (13×9 tiles, centred on 800×608)
 const TR_X=192, TR_Y=160, TR_C=13, TR_R=9;
 const TLAPTOP={px:TR_X+9*CELL+CELL/2, py:TR_Y+2*CELL+CELL/2};
@@ -572,9 +572,9 @@ function draw(){
       ctx.restore();
       if(pd<56&&!mgActive){
         ctx.save();ctx.globalAlpha=termAlpha;
-        ctx.fillStyle='rgba(0,0,0,0.85)';ctx.fillRect(TERM_PX-60,TERM_PY-32,120,18);
-        ctx.fillStyle='#aaccff';ctx.font='bold 11px monospace';ctx.textAlign='center';
-        ctx.fillText('[K]  Evidence Terminal',TERM_PX,TERM_PY-19);ctx.textAlign='left';
+        ctx.fillStyle='rgba(0,0,0,0.85)';ctx.fillRect(TERM_PX-46,TERM_PY-32,92,20);
+        ctx.fillStyle='#00ffcc';ctx.font='bold 11px monospace';ctx.textAlign='center';
+        ctx.fillText('[K]  INTERACT',TERM_PX,TERM_PY-17);ctx.textAlign='left';
         ctx.restore();
       }
     }
