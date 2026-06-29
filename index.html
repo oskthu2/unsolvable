@@ -277,6 +277,9 @@ canvas{display:block;image-rendering:pixelated}
 // ─── CONSTANTS ───────────────────────────────────────────────
 const CELL = 32, COLS = 25, ROWS = 19;
 const PSPEED = 2.8, MSPEED = 0.5;
+// Tutorial room (13×9 tiles, centred on 800×608)
+const TR_X=192, TR_Y=160, TR_C=13, TR_R=9;
+const TLAPTOP={px:TR_X+9*CELL+CELL/2, py:TR_Y+2*CELL+CELL/2};
 
 // ─── MAZE (25×19, 1=wall 0=path) ─────────────────────────────
 const M = [
@@ -303,12 +306,14 @@ const M = [
 // Fix row 4 col 24 (was 1 = border OK)
 
 // ─── GAME STATE ───────────────────────────────────────────────
+let phase = 'tutorial';
+let fadeOverlay = 0, fadingOut = false, fadingIn = false;
 let lives = 3, dead = false, won = false, laptopOpen = false;
 let pingTimer = 5, pingFlash = 0;
 const PING_INTERVAL = 5, PING_DURATION = 0.6, CLOSE_DIST = CELL * 5;
 let caught = false;
-let pl = {px:48, py:48};          // pixel centre
-let mn = {px:752, py:560, path:[], pt:0}; // 23*32+16, 17*32+16
+let pl = {px:400, py:304};
+let mn = {px:752, py:560, path:[], pt:0};
 let keys = {};
 let tick = 0;
 
@@ -360,6 +365,70 @@ function gridOf(px,py){
 // ─── CANVAS ───────────────────────────────────────────────────
 const cv=document.getElementById('cv');
 const ctx=cv.getContext('2d');
+
+// ─── TUTORIAL ROOM ────────────────────────────────────────────
+function drawTutorial(){
+  ctx.fillStyle='#050510';ctx.fillRect(0,0,800,608);
+  for(let r=0;r<TR_R;r++){
+    for(let c=0;c<TR_C;c++){
+      const wall=r===0||r===TR_R-1||c===0||c===TR_C-1;
+      const x=TR_X+c*CELL,y=TR_Y+r*CELL;
+      if(wall){
+        ctx.fillStyle='#18082a';ctx.fillRect(x,y,CELL,CELL);
+        ctx.fillStyle='#2a0f44';ctx.fillRect(x,y,CELL,2);ctx.fillRect(x,y,2,CELL);
+        ctx.fillStyle='#0d0518';ctx.fillRect(x+CELL-2,y,2,CELL);ctx.fillRect(x,y+CELL-2,CELL,2);
+      }else{
+        ctx.fillStyle='#08051a';ctx.fillRect(x,y,CELL,CELL);
+        ctx.fillStyle='rgba(80,60,120,0.07)';ctx.fillRect(x+CELL/2-1,y+CELL/2-1,2,2);
+      }
+    }
+  }
+  const lx=TLAPTOP.px,ly=TLAPTOP.py;
+  // Desk
+  ctx.fillStyle='#0d0820';ctx.fillRect(lx-40,ly+6,80,20);
+  ctx.strokeStyle='#261040';ctx.lineWidth=1;ctx.strokeRect(lx-40,ly+6,80,20);
+  // Laptop base (keyboard)
+  ctx.fillStyle='#131330';ctx.fillRect(lx-20,ly-4,40,14);
+  // Laptop screen back
+  ctx.fillStyle='#0d0d24';ctx.fillRect(lx-18,ly-30,36,28);
+  ctx.strokeStyle='#1a1a3a';ctx.strokeRect(lx-18,ly-30,36,28);
+  // Screen display
+  ctx.fillStyle='#001833';ctx.fillRect(lx-14,ly-27,28,21);
+  ctx.fillStyle='rgba(50,120,255,0.5)';ctx.fillRect(lx-12,ly-25,24,17);
+  // Screen glow
+  ctx.save();
+  ctx.shadowColor='rgba(60,130,255,0.9)';ctx.shadowBlur=18;
+  ctx.strokeStyle='rgba(60,130,255,0.3)';ctx.lineWidth=1;ctx.strokeRect(lx-12,ly-25,24,17);
+  ctx.restore();
+  // Pickup prompt when close
+  const distL=Math.hypot(pl.px-lx,pl.py-ly);
+  if(distL<80){
+    ctx.fillStyle='rgba(0,0,0,0.85)';ctx.fillRect(lx-46,ly-52,92,20);
+    ctx.fillStyle='#00ffcc';ctx.font='bold 11px monospace';ctx.textAlign='center';
+    ctx.fillText('[K]  PICK UP',lx,ly-37);
+    ctx.textAlign='left';
+  }
+  // Player glow
+  const pg=ctx.createRadialGradient(pl.px,pl.py,0,pl.px,pl.py,CELL);
+  pg.addColorStop(0,'rgba(0,255,220,0.22)');pg.addColorStop(1,'rgba(0,255,220,0)');
+  ctx.fillStyle=pg;ctx.fillRect(pl.px-CELL,pl.py-CELL,CELL*2,CELL*2);
+  // Player
+  ctx.save();
+  ctx.shadowColor='#00ffcc';ctx.shadowBlur=14;
+  ctx.fillStyle='#00ffcc';ctx.beginPath();ctx.arc(pl.px,pl.py,9,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.fillStyle='#003322';ctx.beginPath();ctx.arc(pl.px,pl.py,4,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(0,255,200,0.5)';ctx.beginPath();ctx.arc(pl.px-3,pl.py-3,3,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+  // Title above room
+  ctx.fillStyle='#aabbff';ctx.font='bold 16px monospace';ctx.textAlign='center';
+  ctx.fillText('THE VOSS MANSION MYSTERY',400,TR_Y-32);
+  ctx.fillStyle='#556677';ctx.font='12px monospace';
+  ctx.fillText('Prof. Voss has been found dead. Gather your equipment before entering the mansion.',400,TR_Y-12);
+  ctx.textAlign='left';
+  // Fade overlay
+  if(fadeOverlay>0){ctx.fillStyle=`rgba(0,0,0,${fadeOverlay})`;ctx.fillRect(0,0,800,608);}
+}
 
 function draw(){
   ctx.fillStyle='#050510';
@@ -450,6 +519,9 @@ function draw(){
     ctx.fillStyle='rgba(255,0,0,0.35)';
     ctx.fillRect(0,0,800,608);
   }
+
+  // Transition fade-in from tutorial
+  if(fadeOverlay>0){ctx.fillStyle=`rgba(0,0,0,${fadeOverlay})`;ctx.fillRect(0,0,800,608);}
 
   updateSbar(dist);
 }
@@ -746,6 +818,37 @@ let lt=0;
 function loop(ts){
   requestAnimationFrame(loop);
   const dt=Math.min((ts-lt)/1000,0.05);lt=ts;tick++;
+
+  // Fade transitions
+  if(fadingOut){
+    fadeOverlay=Math.min(1,fadeOverlay+dt*1.5);
+    if(fadeOverlay>=1){
+      fadingOut=false;phase='maze';pl.px=48;pl.py=48;fadingIn=true;
+      document.getElementById('hud').style.display='flex';
+      document.getElementById('hint').innerHTML='WASD / Arrow Keys &nbsp;&#9135;&nbsp; [L] Open Laptop &nbsp;&#9135;&nbsp; [ESC] Close Laptop &nbsp;&#9135;&nbsp; Investigate the case &mdash; but don\'t get caught!';
+    }
+  }
+  if(fadingIn){
+    fadeOverlay=Math.max(0,fadeOverlay-dt*2);
+    if(fadeOverlay<=0)fadingIn=false;
+  }
+
+  if(phase==='tutorial'){
+    if(!fadingOut){
+      let dx=0,dy=0;
+      if(keys['ArrowLeft']||keys['a']||keys['A'])dx=-1;
+      if(keys['ArrowRight']||keys['d']||keys['D'])dx=1;
+      if(keys['ArrowUp']||keys['w']||keys['W'])dy=-1;
+      if(keys['ArrowDown']||keys['s']||keys['S'])dy=1;
+      const minX=TR_X+CELL+9,maxX=TR_X+(TR_C-1)*CELL-9;
+      const minY=TR_Y+CELL+9,maxY=TR_Y+(TR_R-1)*CELL-9;
+      if(dx)pl.px=Math.max(minX,Math.min(maxX,pl.px+dx*PSPEED));
+      if(dy)pl.py=Math.max(minY,Math.min(maxY,pl.py+dy*PSPEED));
+    }
+    drawTutorial();
+    return;
+  }
+
   updateGlitch();
 
   if(!dead&&!won&&!caught){
@@ -796,24 +899,18 @@ function loop(ts){
 // ─── INPUT ────────────────────────────────────────────────────
 document.addEventListener('keydown',e=>{
   keys[e.key]=true;
-  if(e.key==='l'||e.key==='L'){laptopOpen?closeLaptop():openLaptop();}
+  if((e.key==='k'||e.key==='K')&&phase==='tutorial'&&!fadingOut){
+    if(Math.hypot(pl.px-TLAPTOP.px,pl.py-TLAPTOP.py)<80)fadingOut=true;
+  }
+  if((e.key==='l'||e.key==='L')&&phase==='maze'){laptopOpen?closeLaptop():openLaptop();}
   if(e.key==='Escape')closeLaptop();
   if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();
 });
 document.addEventListener('keyup',e=>keys[e.key]=false);
 
 // ─── START ────────────────────────────────────────────────────
-showMsg(
-  'THE VOSS MANSION MYSTERY\n\n'+
-  'Professor Edgar Voss has been murdered.\n'+
-  'His research notebook is missing.\n\n'+
-  'You must identify the killer — but a creature\npatrols the maze. It never stops hunting.\n\n'+
-  'WASD / Arrow Keys  —  Move\n'+
-  '[L]  —  Open / Close Laptop\n'+
-  '[ESC]  —  Close Laptop\n\n'+
-  'Read every file. The truth is in the details.\n\n'+
-  'Good luck, Detective.'
-);
+document.getElementById('hud').style.display='none';
+document.getElementById('hint').innerHTML='WASD / Arrow Keys &nbsp;&mdash;&nbsp; Move &nbsp;&#9135;&nbsp; Approach the laptop and press  [K]  to pick it up';
 requestAnimationFrame(ts=>{lt=ts;requestAnimationFrame(loop);});
 </script>
 </body>
