@@ -229,7 +229,7 @@ canvas{display:block;image-rendering:pixelated}
           <option value="webb">Marcus Webb &nbsp;(Private Investor)</option>
         </select>
         <label>SELECT KEY EVIDENCE:</label>
-        <div id="evMissing" style="color:#cc4422;font-size:11px;font-family:'Courier New',monospace;padding:6px;border:1px solid #330000;margin-bottom:10px;line-height:1.6;">&#9888; FILE MISSING &mdash; Evidence inventory not retrieved.<br>Find the field terminal in the bottom-right of the mansion.</div>
+        <div id="evMissing" style="color:#cc4422;font-size:11px;font-family:'Courier New',monospace;padding:6px;border:1px solid #330000;margin-bottom:10px;line-height:1.6;">&#9888; FILE MISSING &mdash; Evidence inventory not retrieved.</div>
         <select id="evSel" class="ap" style="display:none">
           <option value="">-- SELECT EVIDENCE --</option>
           <option value="poison">01. Poison Vial</option>
@@ -558,7 +558,7 @@ function draw(){
   // Evidence terminal icon — fades in by proximity like the monster
   if(!evidenceFound){
     const pd=Math.hypot(pl.px-TERM_PX,pl.py-TERM_PY);
-    const TF_START=CELL*9,TF_FULL=CELL*3;
+    const TF_START=CELL*4.5,TF_FULL=CELL*1.5;
     const termAlpha=pd<TF_FULL?1:pd<TF_START?1-(pd-TF_FULL)/(TF_START-TF_FULL):0;
     if(termAlpha>0){
       ctx.save();ctx.globalAlpha=termAlpha;
@@ -574,7 +574,7 @@ function draw(){
         ctx.save();ctx.globalAlpha=termAlpha;
         ctx.fillStyle='rgba(0,0,0,0.85)';ctx.fillRect(TERM_PX-60,TERM_PY-32,120,18);
         ctx.fillStyle='#aaccff';ctx.font='bold 11px monospace';ctx.textAlign='center';
-        ctx.fillText('[E]  Evidence Terminal',TERM_PX,TERM_PY-19);ctx.textAlign='left';
+        ctx.fillText('[K]  Evidence Terminal',TERM_PX,TERM_PY-19);ctx.textAlign='left';
         ctx.restore();
       }
     }
@@ -741,7 +741,7 @@ const folders={
 
 function openF(id){
   if(id==='ev'&&!evidenceFound){
-    showMsg('Evidence file not found.\n\nLocate the field terminal in the\nbottom-right section of the mansion.');
+    showMsg('Evidence file not found.\n\nYou must retrieve it before\naccessing the evidence inventory.');
     return;
   }
   if(id==='ac'){
@@ -775,7 +775,7 @@ function goBack(){
 function fileCharges(){
   const s=document.getElementById('suspSel').value;
   const e=document.getElementById('evSel').value;
-  if(!evidenceFound||!e){showMsg('Evidence file missing.\nRetrieve it from the field terminal\nbefore filing charges.');return;}
+  if(!evidenceFound||!e){showMsg('Evidence file missing.\nRetrieve it before filing charges.');return;}
   if(!s){showMsg('Select a suspect\nbefore filing charges.');return;}
   closeLaptop();
   const cs=s==='frost';
@@ -965,7 +965,7 @@ function loop(ts){
     if(fadeOverlay>=1){
       fadingOut=false;phase='maze';pl.px=48;pl.py=48;fadingIn=true;
       document.getElementById('hud').style.display='flex';
-      document.getElementById('hint').innerHTML='WASD / Arrow Keys &nbsp;&#9135;&nbsp; [L] Laptop &nbsp;&#9135;&nbsp; [E] Terminal &nbsp;&#9135;&nbsp; [ESC] Close &nbsp;&#9135;&nbsp; Investigate the case &mdash; but don\'t get caught!';
+      document.getElementById('hint').innerHTML='WASD / Arrow Keys &nbsp;&#9135;&nbsp; [L] Laptop &nbsp;&#9135;&nbsp; [K] Interact &nbsp;&#9135;&nbsp; [ESC] Close &nbsp;&#9135;&nbsp; Investigate the case &mdash; but don\'t get caught!';
     }
   }
   if(fadingIn){
@@ -1053,7 +1053,7 @@ document.addEventListener('keydown',e=>{
   if((e.key==='k'||e.key==='K')&&phase==='tutorial'&&!fadingOut){
     if(Math.hypot(pl.px-TLAPTOP.px,pl.py-TLAPTOP.py)<80)fadingOut=true;
   }
-  if((e.key==='e'||e.key==='E')&&phase==='maze'&&!laptopOpen&&!mgActive&&!evidenceFound){
+  if((e.key==='e'||e.key==='E'||e.key==='k'||e.key==='K')&&phase==='maze'&&!laptopOpen&&!mgActive&&!evidenceFound){
     if(Math.hypot(pl.px-TERM_PX,pl.py-TERM_PY)<56)startMinigame();
   }
   if((e.key===' '||e.key==='Enter')&&mgActive){mgLock();e.preventDefault();}
