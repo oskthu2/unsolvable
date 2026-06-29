@@ -122,6 +122,40 @@ canvas{display:block;image-rendering:pixelated}
   font-family:monospace;font-size:13px;
 }
 #msg button:hover{background:#222}
+
+/* Case Failed overlay */
+#caseFailed{
+  position:absolute;top:0;left:0;right:0;bottom:0;
+  background:#000;display:none;flex-direction:column;
+  justify-content:center;align-items:center;z-index:50;
+  font-family:'Courier New',monospace;
+}
+@keyframes redFlash{
+  0%{background:#000}
+  15%{background:rgba(200,0,0,0.85)}
+  30%{background:rgba(60,0,0,0.4)}
+  50%{background:rgba(200,0,0,0.7)}
+  70%{background:rgba(40,0,0,0.3)}
+  100%{background:#000}
+}
+#caseFailed.flashing{animation:redFlash 1.1s ease-out forwards}
+#cfTitle{
+  color:#cc0000;font-size:32px;letter-spacing:6px;
+  text-shadow:0 0 20px rgba(255,0,0,0.8);
+  margin-bottom:28px;min-height:40px;
+}
+#cfBody{
+  color:#778899;font-size:12px;line-height:2;
+  text-align:left;min-height:120px;width:340px;
+  white-space:pre;
+}
+#cfBtn{
+  margin-top:24px;background:#110000;color:#cc2200;
+  border:1px solid #660000;padding:8px 24px;cursor:pointer;
+  font-family:'Courier New',monospace;font-size:13px;
+  display:none;letter-spacing:2px;
+}
+#cfBtn:hover{background:#220000}
 </style>
 </head>
 <body>
@@ -227,6 +261,12 @@ canvas{display:block;image-rendering:pixelated}
 
   <!-- Message box -->
   <div id="msg"><div id="msgTxt"></div><button id="msgBtn" onclick="dismissMsg()">CONTINUE</button></div>
+
+  <div id="caseFailed">
+    <div id="cfTitle"></div>
+    <div id="cfBody"></div>
+    <button id="cfBtn" onclick="location.reload()">[ PLAY AGAIN ]</button>
+  </div>
 
   <div id="hint">WASD / Arrow Keys &nbsp;&#9135;&nbsp; [L] Open Laptop &nbsp;&#9135;&nbsp; [ESC] Close Laptop &nbsp;&#9135;&nbsp; Investigate the case &mdash; but don&apos;t get caught!</div>
 </div>
@@ -549,7 +589,7 @@ function fileCharges(){
     const suspectName=document.getElementById('suspSel').options[document.getElementById('suspSel').selectedIndex].text.split('(')[0].trim();
     if(lives<=0){
       dead=true;
-      showMsg(suspectName+' could not be proven guilty.\n\nWith no lives left the killer\ndisappears into the night.\n\nGAME OVER',true,true);
+      showCaseFailed(suspectName+' could not be proven guilty.');
     } else {
       showMsg(suspectName+' could not be proven guilty.\n\n'+lives+(lives===1?' life':' lives')+' remaining.\nKeep investigating.');
     }
@@ -626,6 +666,58 @@ function closeLaptop(){
   },250);
 }
 
+// ─── CASE FAILED SCREEN ───────────────────────────────────────
+function showCaseFailed(reason){
+  const overlay=document.getElementById('caseFailed');
+  const titleEl=document.getElementById('cfTitle');
+  const bodyEl=document.getElementById('cfBody');
+  const btn=document.getElementById('cfBtn');
+  overlay.style.display='flex';
+  titleEl.textContent='';bodyEl.textContent='';btn.style.display='none';
+
+  // Red flash first, then type
+  overlay.classList.add('flashing');
+  setTimeout(()=>{
+    overlay.classList.remove('flashing');
+    // Type title letter by letter
+    const title='CASE FAILED';
+    const bodyLines=[
+      '',
+      '> '+reason,
+      '',
+      '> Evidence archived.',
+      '> Case file sealed.',
+      '> The killer was never found.',
+    ];
+    let ti=0;
+    function typeTitle(){
+      if(ti<title.length){
+        titleEl.textContent=title.slice(0,ti+1)+'█';
+        ti++;
+        setTimeout(typeTitle,80+Math.random()*60);
+      } else {
+        titleEl.textContent=title;
+        setTimeout(typeBody,400);
+      }
+    }
+    const fullBody=bodyLines.join('\n');
+    let bi=0;
+    function typeBody(){
+      if(bi<fullBody.length){
+        bodyEl.textContent=fullBody.slice(0,bi+1)+'█';
+        bi++;
+        const ch=fullBody[bi-1];
+        const delay=ch==='\n'?220:ch==='.'?120:35+Math.random()*40;
+        setTimeout(typeBody,delay);
+      } else {
+        bodyEl.textContent=fullBody;
+        btn.style.display='block';
+      }
+    }
+    typeTitle();
+  },1100);
+}
+
 // ─── MESSAGES ─────────────────────────────────────────────────
 function showMsg(txt,isEnd,isGameOver){
   const el=document.getElementById('msg');
@@ -643,7 +735,7 @@ function triggerCatch(){
   if(caught)return;
   caught=true;dead=true;
   closeLaptop();
-  showMsg('CAUGHT!\n\nThe creature drags you away\nbefore you can solve the case.\n\nGAME OVER',true,true);
+  showCaseFailed('You were caught by the creature.');
 }
 
 // ─── GAME LOOP ────────────────────────────────────────────────
