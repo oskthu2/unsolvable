@@ -341,18 +341,21 @@ function draw(){
 
   // Monster visibility
   const dist=Math.hypot(mn.px-pl.px,mn.py-pl.py);
-  const closeRange=dist<CLOSE_DIST;
+  const FADE_START=CLOSE_DIST;
+  const FADE_FULL=CELL*2;
+  const monsterAlpha=dist<FADE_FULL?1:dist<FADE_START?1-(dist-FADE_FULL)/(FADE_START-FADE_FULL):0;
 
-  if(closeRange){
-    // Danger glow when close
+  if(monsterAlpha>0){
+    // Danger glow, fading in with monster
     const prox=1-dist/CLOSE_DIST;
     const mg=ctx.createRadialGradient(mn.px,mn.py,0,mn.px,mn.py,CELL*4);
-    mg.addColorStop(0,`rgba(255,0,40,${0.18*prox})`);
+    mg.addColorStop(0,`rgba(255,0,40,${0.18*prox*monsterAlpha})`);
     mg.addColorStop(1,'rgba(255,0,40,0)');
     ctx.fillStyle=mg;
     ctx.fillRect(mn.px-CELL*4,mn.py-CELL*4,CELL*8,CELL*8);
-    // Full monster
+    // Monster blob, fading in
     ctx.save();
+    ctx.globalAlpha=monsterAlpha;
     ctx.shadowColor='#ff0022';ctx.shadowBlur=18;
     ctx.fillStyle='#cc0022';
     ctx.beginPath();ctx.arc(mn.px,mn.py,12,0,Math.PI*2);ctx.fill();
