@@ -566,36 +566,36 @@ function updateGlitch(){
     return;
   }
   const dist=Math.hypot(mn.px-pl.px,mn.py-pl.py);
-  const glitchStart=CLOSE_DIST*3.5;
+  const glitchStart=CLOSE_DIST*2.2;
   const t=Math.max(0,1-dist/glitchStart); // 0=calm, 1=max
   if(t<=0){
     screen.style.transform='';screen.style.filter='';screen.style.boxShadow='';
     overlay.style.opacity='0';return;
   }
   // Jitter
-  const jx=Math.random()<t*0.8?(Math.random()-.5)*t*12:0;
-  const jy=Math.random()<t*0.5?(Math.random()-.5)*t*6:0;
+  const jx=Math.random()<t*0.9?(Math.random()-.5)*t*22:0;
+  const jy=Math.random()<t*0.6?(Math.random()-.5)*t*12:0;
   screen.style.transform=`translate(${jx.toFixed(1)}px,${jy.toFixed(1)}px)`;
   // Color distortion
-  const hue=(Math.random()-.5)*t*50;
-  const br=(0.85+Math.random()*0.4*t).toFixed(2);
-  const sat=(1+t*Math.random()*2).toFixed(2);
+  const hue=(Math.random()-.5)*t*90;
+  const br=(0.7+Math.random()*0.7*t).toFixed(2);
+  const sat=(1+t*Math.random()*4).toFixed(2);
   screen.style.filter=`hue-rotate(${hue.toFixed(0)}deg) brightness(${br}) saturate(${sat})`;
   // Channel-split shadow
-  if(Math.random()<t*0.6){
-    const ox=((Math.random()-.5)*t*10).toFixed(1);
-    const oy=((Math.random()-.5)*t*5).toFixed(1);
-    screen.style.boxShadow=`${ox}px ${oy}px 0 rgba(255,0,60,${(t*.4).toFixed(2)}),${-ox}px ${-oy}px 0 rgba(0,255,200,${(t*.35).toFixed(2)}),0 0 40px rgba(40,60,255,0.25),inset 0 0 30px rgba(0,0,0,0.6)`;
+  if(Math.random()<t*0.75){
+    const ox=((Math.random()-.5)*t*20).toFixed(1);
+    const oy=((Math.random()-.5)*t*10).toFixed(1);
+    screen.style.boxShadow=`${ox}px ${oy}px 0 rgba(255,0,60,${(t*.7).toFixed(2)}),${-ox}px ${-oy}px 0 rgba(0,255,200,${(t*.6).toFixed(2)}),0 0 40px rgba(40,60,255,0.25),inset 0 0 30px rgba(0,0,0,0.6)`;
   } else {
     screen.style.boxShadow='';
   }
   // Random horizontal glitch bars
-  if(Math.random()<t*0.5){
+  if(Math.random()<t*0.7){
     const bands=[];
-    const n=Math.ceil(t*4);
+    const n=Math.ceil(t*7);
     for(let i=0;i<n;i++){
       const y=(Math.random()*96).toFixed(1);
-      const h=(Math.random()*4*t+0.5).toFixed(1);
+      const h=(Math.random()*10*t+0.5).toFixed(1);
       const col=Math.random()>.5?`rgba(255,20,60,${(t*.5).toFixed(2)})`:`rgba(0,255,180,${(t*.4).toFixed(2)})`;
       bands.push(`transparent ${y}%,${col} ${y}%,${col} calc(${y}% + ${h}px),transparent calc(${y}% + ${h}px)`);
     }
