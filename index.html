@@ -1053,8 +1053,9 @@ document.addEventListener('keydown',e=>{
   if((e.key==='k'||e.key==='K')&&phase==='tutorial'&&!fadingOut){
     if(Math.hypot(pl.px-TLAPTOP.px,pl.py-TLAPTOP.py)<80)fadingOut=true;
   }
-  if((e.key==='e'||e.key==='E'||e.key==='k'||e.key==='K')&&phase==='maze'&&!laptopOpen&&!mgActive&&!evidenceFound){
-    if(Math.hypot(pl.px-TERM_PX,pl.py-TERM_PY)<56)startMinigame();
+  if((e.key==='e'||e.key==='E'||e.key==='k'||e.key==='K')&&phase==='maze'&&!laptopOpen){
+    if(mgActive){mgActive=false;}
+    else if(!evidenceFound&&Math.hypot(pl.px-TERM_PX,pl.py-TERM_PY)<56)startMinigame();
   }
   if((e.key===' '||e.key==='Enter')&&mgActive){mgLock();e.preventDefault();}
   if((e.key==='l'||e.key==='L')&&phase==='maze'&&!mgActive){laptopOpen?closeLaptop():openLaptop();}
