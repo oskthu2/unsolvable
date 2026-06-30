@@ -459,7 +459,7 @@ function drawTutorial(){
 
 // ─── MINIGAME ─────────────────────────────────────────────────
 function startMinigame(){
-  if(evidenceFound||mgActive)return;
+  if(suspFilesFound||mgActive)return;
   mgCode=[Math.floor(Math.random()*10),Math.floor(Math.random()*10),Math.floor(Math.random()*10)];
   mgDigitIndex=0;mgCurrentVal=0;mgSpeedTimer=0;mgWrongFlash=0;mgSuccess=false;
   mgActive=true;
@@ -470,9 +470,10 @@ function mgLock(){
     mgDigitIndex++;mgCurrentVal=0;mgSpeedTimer=0;
     if(mgDigitIndex>=3){
       mgSuccess=true;
-      setTimeout(()=>{mgActive=false;evidenceFound=true;
-        document.getElementById('evIcon').style.opacity='1';
-        document.getElementById('evIcon').style.cursor='pointer';
+      setTimeout(()=>{
+        mgActive=false;suspFilesFound=true;
+        const el=document.getElementById('suspFolder');
+        if(el){el.style.opacity='1';el.style.cursor='pointer';el.querySelector('.em').textContent='📂';}
       },1500);
     }
   } else {
@@ -499,7 +500,7 @@ function drawMinigame(){
   ctx.fillStyle='#06061a';ctx.fillRect(bx,by,bw,26);
   ctx.fillStyle='#3344aa';ctx.font='bold 11px monospace';
   ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText('EVIDENCE TERMINAL  ╏  SECURE ACCESS',400,by+13);
+  ctx.fillText('SUSPECT FILE TERMINAL  ╏  SECURE ACCESS',400,by+13);
   // Info
   ctx.fillStyle='#445566';ctx.font='12px monospace';
   ctx.fillText('> Secure file detected. Enter the 3-digit access code.',400,by+50);
@@ -530,7 +531,7 @@ function drawMinigame(){
   }
   // Status
   ctx.font='12px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
-  if(mgSuccess){ctx.fillStyle='#00ff55';ctx.fillText('ACCESS GRANTED — Evidence file retrieved.',400,by+256);}
+  if(mgSuccess){ctx.fillStyle='#00ff55';ctx.fillText('ACCESS GRANTED — Suspect files retrieved.',400,by+256);}
   else if(mgWrongFlash>0){ctx.fillStyle='#ff3300';ctx.fillText('INCORRECT — resetting code entry...',400,by+256);}
   else{ctx.fillStyle='#334455';ctx.fillText('Press  [SPACE]  to stop current digit    [ESC] cancel',400,by+256);}
   // End glitch — restore then draw bars on top
@@ -549,7 +550,7 @@ function drawMinigame(){
 }
 
 function startSuspMinigame(){
-  if(suspFilesFound||smgActive)return;
+  if(evidenceFound||smgActive)return;
   smgBar=0;smgSuccess=false;
   smgActive=true;
 }
@@ -559,9 +560,9 @@ function smgPress(){
   if(smgBar>=1){
     smgSuccess=true;
     setTimeout(()=>{
-      smgActive=false;suspFilesFound=true;
-      const el=document.getElementById('suspFolder');
-      if(el){el.style.opacity='1';el.style.cursor='pointer';el.querySelector('.em').textContent='📂';}
+      smgActive=false;evidenceFound=true;
+      document.getElementById('evIcon').style.opacity='1';
+      document.getElementById('evIcon').style.cursor='pointer';
     },1500);
   }
 }
@@ -582,7 +583,7 @@ function drawSuspMinigame(){
   ctx.fillStyle='#06120a';ctx.fillRect(bx,by,bw,26);
   ctx.fillStyle='#33aa55';ctx.font='bold 11px monospace';
   ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText('SUSPECT FILE CABINET  ╏  EMERGENCY OVERRIDE',400,by+13);
+  ctx.fillText('EVIDENCE CABINET  ╏  EMERGENCY OVERRIDE',400,by+13);
   ctx.fillStyle='#445566';ctx.font='12px monospace';
   ctx.fillText('> Magnetic lock engaged. Apply physical force to override.',400,by+50);
   const barX=bx+40,barY=by+78,barW=bw-80,barH=34;
@@ -606,7 +607,7 @@ function drawSuspMinigame(){
   ctx.fillText(Math.round(smgBar*100)+'%',400,barY+barH/2);
   ctx.font='12px monospace';
   if(smgSuccess){
-    ctx.fillStyle='#00ff55';ctx.fillText('ACCESS GRANTED — Suspect files retrieved.',400,by+148);
+    ctx.fillStyle='#00ff55';ctx.fillText('ACCESS GRANTED — Evidence file retrieved.',400,by+148);
   } else {
     ctx.fillStyle='#334455';ctx.fillText('Press  [SPACE]  rapidly to force the lock    [ESC / K] cancel',400,by+148);
     if(smgBar>0.05){
@@ -655,7 +656,7 @@ function draw(){
   }
 
   // Evidence terminal icon — fades in by proximity like the monster
-  if(!evidenceFound){
+  if(!suspFilesFound){
     const pd=Math.hypot(pl.px-TERM_PX,pl.py-TERM_PY);
     const TF_START=CELL*4.5,TF_FULL=CELL*1.5;
     const termAlpha=pd<TF_FULL?1:pd<TF_START?1-(pd-TF_FULL)/(TF_START-TF_FULL):0;
@@ -680,7 +681,7 @@ function draw(){
   }
 
   // Suspect file cabinet icon — fades in by proximity
-  if(!suspFilesFound){
+  if(!evidenceFound){
     const sd=Math.hypot(pl.px-SUSP_PX,pl.py-SUSP_PY);
     const SF_START=CELL*4.5,SF_FULL=CELL*1.5;
     const suspAlpha=sd<SF_FULL?1:sd<SF_START?1-(sd-SF_FULL)/(SF_START-SF_FULL):0;
@@ -1211,8 +1212,8 @@ document.addEventListener('keydown',e=>{
   if((e.key==='e'||e.key==='E'||e.key==='k'||e.key==='K')&&phase==='maze'&&!laptopOpen){
     if(mgActive){mgActive=false;}
     else if(smgActive){smgActive=false;}
-    else if(!evidenceFound&&Math.hypot(pl.px-TERM_PX,pl.py-TERM_PY)<56)startMinigame();
-    else if(!suspFilesFound&&Math.hypot(pl.px-SUSP_PX,pl.py-SUSP_PY)<56)startSuspMinigame();
+    else if(!suspFilesFound&&Math.hypot(pl.px-TERM_PX,pl.py-TERM_PY)<56)startMinigame();
+    else if(!evidenceFound&&Math.hypot(pl.px-SUSP_PX,pl.py-SUSP_PY)<56)startSuspMinigame();
   }
   if(e.key===' '){
     if(mgActive){mgLock();}
