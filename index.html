@@ -291,7 +291,7 @@ canvas{display:block;image-rendering:pixelated}
 <script>
 // ─── CONSTANTS ───────────────────────────────────────────────
 const CELL = 32, COLS = 25, ROWS = 19;
-const PSPEED = 2.8, MSPEED = 0.6, MSPEED_BOOST = 1.25;
+const PSPEED = 2.8, MSPEED = 0.6, MSPEED_NEAR = 0.85;
 // Tutorial room (13×9 tiles, centred on 800×608)
 const TR_X=192, TR_Y=160, TR_C=13, TR_R=9;
 const TLAPTOP={px:TR_X+9*CELL+CELL/2, py:TR_Y+2*CELL+CELL/2};
@@ -1234,7 +1234,7 @@ function loop(ts){
       const tx=tc*CELL+CELL/2,ty=tr*CELL+CELL/2;
       const dx=tx-mn.px,dy=ty-mn.py;
       const d=Math.hypot(dx,dy);
-      const curMSpeed=Math.hypot(mn.px-pl.px,mn.py-pl.py)<CLOSE_DIST?MSPEED*MSPEED_BOOST:MSPEED;
+      const curMSpeed=Math.hypot(mn.px-pl.px,mn.py-pl.py)<CLOSE_DIST?MSPEED_NEAR:MSPEED;
       if(d<curMSpeed+0.5){mn.px=tx;mn.py=ty;mn.path.shift();}
       else{mn.px+=dx/d*curMSpeed;mn.py+=dy/d*curMSpeed;}
     }
