@@ -738,11 +738,12 @@ function draw(){
   if(monsterAlpha>0){
     // Danger glow, fading in with monster
     const prox=1-dist/CLOSE_DIST;
-    const mg=ctx.createRadialGradient(mn.px,mn.py,0,mn.px,mn.py,CELL*4);
-    mg.addColorStop(0,`rgba(255,0,40,${0.18*prox*monsterAlpha})`);
+    const mg=ctx.createRadialGradient(mn.px,mn.py,0,mn.px,mn.py,CELL*5.5);
+    mg.addColorStop(0,`rgba(255,0,40,${0.4*prox*monsterAlpha})`);
+    mg.addColorStop(0.5,`rgba(255,0,40,${0.18*prox*monsterAlpha})`);
     mg.addColorStop(1,'rgba(255,0,40,0)');
     ctx.fillStyle=mg;
-    ctx.fillRect(mn.px-CELL*4,mn.py-CELL*4,CELL*8,CELL*8);
+    ctx.fillRect(mn.px-CELL*5.5,mn.py-CELL*5.5,CELL*11,CELL*11);
     // Monster blob, fading in
     ctx.save();
     ctx.globalAlpha=monsterAlpha;
