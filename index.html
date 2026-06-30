@@ -643,8 +643,8 @@ function drawSuspMinigame(){
 }
 
 function draw(){
-  // Screen shake — ramps up as the monster gets close
-  const SHAKE_DIST=CELL*6.125, SHAKE_MAX=4;
+  // Screen shake — only kicks in once the monster is fully visible
+  const SHAKE_DIST=CELL*2, SHAKE_MAX=4;
   const mDist=Math.hypot(mn.px-pl.px,mn.py-pl.py);
   const shakeAmt=mDist<SHAKE_DIST?1-mDist/SHAKE_DIST:0;
   const shx=shakeAmt>0?(Math.random()-0.5)*2*SHAKE_MAX*shakeAmt:0;
