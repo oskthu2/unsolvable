@@ -291,7 +291,7 @@ canvas{display:block;image-rendering:pixelated}
 <script>
 // ─── CONSTANTS ───────────────────────────────────────────────
 const CELL = 32, COLS = 25, ROWS = 19;
-const PSPEED = 2.8, MSPEED = 0.6;
+const PSPEED = 2.8, MSPEED = 0.6, MSPEED_BOOST = 1.25;
 // Tutorial room (13×9 tiles, centred on 800×608)
 const TR_X=192, TR_Y=160, TR_C=13, TR_R=9;
 const TLAPTOP={px:TR_X+9*CELL+CELL/2, py:TR_Y+2*CELL+CELL/2};
@@ -643,8 +643,17 @@ function drawSuspMinigame(){
 }
 
 function draw(){
+  // Screen shake — ramps up as the monster gets close
+  const SHAKE_DIST=CELL*3.5, SHAKE_MAX=4;
+  const mDist=Math.hypot(mn.px-pl.px,mn.py-pl.py);
+  const shakeAmt=mDist<SHAKE_DIST?1-mDist/SHAKE_DIST:0;
+  const shx=shakeAmt>0?(Math.random()-0.5)*2*SHAKE_MAX*shakeAmt:0;
+  const shy=shakeAmt>0?(Math.random()-0.5)*2*SHAKE_MAX*shakeAmt:0;
+  ctx.save();
+  ctx.translate(shx,shy);
+
   ctx.fillStyle='#050510';
-  ctx.fillRect(0,0,800,608);
+  ctx.fillRect(-SHAKE_MAX,-SHAKE_MAX,800+SHAKE_MAX*2,608+SHAKE_MAX*2);
 
   // Maze
   for(let r=0;r<ROWS;r++){
@@ -776,6 +785,8 @@ function draw(){
   ctx.fillStyle='rgba(0,255,200,0.5)';
   ctx.beginPath();ctx.arc(pl.px-3,pl.py-3,3,0,Math.PI*2);ctx.fill();
   ctx.restore();
+
+  ctx.restore(); // ends the screen-shake transform
 
   // Caught flash
   if(caught){
@@ -1223,8 +1234,9 @@ function loop(ts){
       const tx=tc*CELL+CELL/2,ty=tr*CELL+CELL/2;
       const dx=tx-mn.px,dy=ty-mn.py;
       const d=Math.hypot(dx,dy);
-      if(d<MSPEED+0.5){mn.px=tx;mn.py=ty;mn.path.shift();}
-      else{mn.px+=dx/d*MSPEED;mn.py+=dy/d*MSPEED;}
+      const curMSpeed=Math.hypot(mn.px-pl.px,mn.py-pl.py)<CLOSE_DIST?MSPEED*MSPEED_BOOST:MSPEED;
+      if(d<curMSpeed+0.5){mn.px=tx;mn.py=ty;mn.path.shift();}
+      else{mn.px+=dx/d*curMSpeed;mn.py+=dy/d*curMSpeed;}
     }
 
     // Catch check
